@@ -3,7 +3,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/auth/LoginPage";
 import { useAuthStore } from "./stores/authStore";
 import DashboardPage from "./pages/DashboardPage";
-import MessagePane from "./components/features/inbox/MessagePane";
+import MessagePaneRoute from "./components/features/inbox/MessagePaneRoute";
 import { SocketProvider } from "./contexts/SocketContext";
 import RegisterPage from "./pages/auth/RegisterPage";
 import Verify2faPage from "./pages/auth/Verify2faPage";
@@ -57,7 +57,7 @@ function App() {
                   />
                   <Route
                     path="page/:pageId/conversation/:conversationId"
-                    element={<MessagePane />}
+                    element={<MessagePaneRoute />}
                   />
                 </Route>
               </Routes>

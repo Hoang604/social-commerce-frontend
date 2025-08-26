@@ -1,29 +1,40 @@
-import { Outlet, useParams } from "react-router-dom";
-import PageSelector from "../components/features/inbox/PageSelector";
+// src/pages/DashboardPage.tsx
+import { useState } from "react";
 import ConversationList from "../components/features/inbox/ConversationList";
+import MessagePane from "../components/features/inbox/MessagePane";
+import PageSelector from "../components/features/inbox/PageSelector";
 
 const DashboardPage = () => {
-  const { conversationId } = useParams();
+  // Giả sử pageId được lấy từ URL hoặc một state global khác
+  // Để đơn giản, chúng ta sẽ hardcode hoặc dùng state tạm
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(
+    "YOUR_DEFAULT_PAGE_ID" // Thay thế bằng ID trang thực tế hoặc logic chọn trang
+  );
+  const [selectedConversationId, setSelectedConversationId] = useState<
+    string | null
+  >(null);
 
   return (
-    <div className="flex h-screen bg-neutral-100">
-      {/* Cột 1: Page Selector & Navigation */}
-      <div className="w-64 bg-white border-r border-neutral-200 flex-shrink-0">
-        <PageSelector />
-      </div>
-
-      {/* Cột 2: Conversation List */}
-      <div
-        className={`w-80 bg-white flex-shrink-0 border-r border-neutral-200 ${
-          conversationId ? "hidden md:flex" : "flex"
-        } flex-col`}
-      >
-        <ConversationList />
-      </div>
-
-      {/* Cột 3: Message Pane (sử dụng Outlet để render component con) */}
-      <div className="flex-1 flex flex-col">
-        <Outlet />
+    <div className="h-screen w-screen flex flex-col">
+      <header className="p-4 border-b">
+        <PageSelector
+          selectedPageId={selectedPageId}
+          onPageChange={setSelectedPageId}
+        />
+      </header>
+      <div className="flex flex-1 overflow-hidden">
+        <div className="w-1/4 border-r overflow-y-auto">
+          {selectedPageId && (
+            <ConversationList
+              pageId={selectedPageId}
+              onConversationSelect={setSelectedConversationId}
+              selectedConversationId={selectedConversationId}
+            />
+          )}
+        </div>
+        <div className="flex-1 flex">
+          <MessagePane conversationId={selectedConversationId} />
+        </div>
       </div>
     </div>
   );

@@ -5,10 +5,28 @@ export default {
     extend: {
       colors: {
         primary: {
+          DEFAULT: "#3B82F6",
+          foreground: "#FFFFFF",
           100: "#DBEAFE",
           500: "#3B82F6",
           600: "#2563EB",
         },
+        secondary: {
+          DEFAULT: "#6B7280",
+          foreground: "#FFFFFF",
+        },
+        destructive: {
+          DEFAULT: "#EF4444",
+          foreground: "#FFFFFF",
+        },
+        background: "#FFFFFF",
+        foreground: "#111827",
+        accent: {
+          DEFAULT: "#F3F4F6",
+          foreground: "#111827",
+        },
+        input: "#E5E7EB",
+        ring: "#3B82F6",
         neutral: {
           900: "#111827",
           600: "#4B5563",

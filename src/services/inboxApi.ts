@@ -1,142 +1,314 @@
+// src/services/inboxApi.ts
 import {
-  useInfiniteQuery,
   useMutation,
-  QueryClient,
+  useQueryClient,
+  useInfiniteQuery,
+  type InfiniteData,
+  type QueryKey,
 } from "@tanstack/react-query";
 import api from "../lib/api";
-
-// This instance would ideally be imported from a central file like main.tsx
-export const queryClient = new QueryClient();
+import { v4 as uuidv4 } from "uuid";
 
 // --- Types ---
-interface Message {
+type MessageStatus = "sending" | "sent" | "delivered" | "read" | "failed";
+type CommentStatus = "sending" | "sent" | "failed" | "received";
+
+export interface Message {
+  id: number | string;
+  conversationId: string;
+  content: string | null;
+  attachments: any[] | null;
+  senderId: string;
+  fromCustomer: boolean;
+  status: MessageStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Conversation {
   id: string;
-  content: string;
-  sender: {
-    id: string;
+  // Thêm các thuộc tính khác của conversation ở đây
+  lastMessage: Message;
+  participant: {
     name: string;
-    profile_pic_url?: string;
+    profilePic: string;
   };
-  status: "sending" | "sent" | "failed";
-  created_at: string;
-  temp_id?: string;
 }
 
-interface GetMessagesResponse {
-  data: Message[];
-  next_cursor: string | null;
+export interface Comment {
+  id: number | string;
+  facebookPostId: string;
+  facebookCommentId: string | null;
+  parentCommentId: number | null;
+  content: string | null;
+  senderId: string;
+  fromCustomer: boolean;
+  status: CommentStatus;
+  createdAt: string;
 }
 
-// --- Get Messages ---
-const getMessages = async ({
-  pageParam,
-  queryKey,
-}: {
-  pageParam?: string;
-  queryKey: any[];
-}): Promise<GetMessagesResponse> => {
-  const [, conversationId] = queryKey;
-  const { data } = await api.get(
-    `/inbox/conversations/${conversationId}/messages`,
-    {
-      params: {
-        limit: 30,
-        cursor: pageParam,
-      },
-    }
-  );
-  return data;
+interface SendMessagePayload {
+  conversationId: string;
+  text: string;
+}
+
+interface ReplyCommentPayload {
+  parentCommentId: number;
+  text: string;
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+// --- Infinite Query Hooks ---
+
+export const useGetConversations = (pageId: string | null) => {
+  return useInfiniteQuery<
+    PaginatedResponse<Conversation>,
+    Error,
+    InfiniteData<PaginatedResponse<Conversation>>,
+    QueryKey,
+    number
+  >({
+    queryKey: ["conversations", pageId],
+    queryFn: async ({ pageParam }) => {
+      const res = await api.get(`/inbox/conversations`, {
+        params: { page: pageParam, limit: 15, pageId },
+      });
+      return res.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page < Math.ceil(lastPage.total / lastPage.limit)) {
+        return lastPage.page + 1;
+      }
+      return undefined;
+    },
+    enabled: !!pageId,
+  });
 };
 
-export const useMessagesQuery = (conversationId: string | undefined) => {
-  return useInfiniteQuery({
+export const useGetMessages = (conversationId: string | null) => {
+  return useInfiniteQuery<
+    PaginatedResponse<Message>,
+    Error,
+    InfiniteData<PaginatedResponse<Message>>,
+    QueryKey,
+    number
+  >({
     queryKey: ["messages", conversationId],
-    queryFn: getMessages,
-    getNextPageParam: (lastPage) => lastPage.next_cursor,
-    initialPageParam: undefined,
+    queryFn: async ({ pageParam }) => {
+      const res = await api.get(
+        `/inbox/conversations/${conversationId}/messages`,
+        {
+          params: { page: pageParam, limit: 20 },
+        }
+      );
+      return res.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page < Math.ceil(lastPage.total / lastPage.limit)) {
+        return lastPage.page + 1;
+      }
+      return undefined;
+    },
     enabled: !!conversationId,
   });
 };
 
-// --- Send Message ---
-const sendMessage = async (payload: {
-  conversationId: string;
-  content: string;
-}) => {
-  const { data } = await api.post(
-    `/inbox/conversations/${payload.conversationId}/messages`,
-    { text: payload.content }
-  );
-  return data;
-};
+// --- Mutation Hooks ---
 
-export const useSendMessageMutation = (conversationId: string) => {
+export const useSendMessage = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: (content: string) => sendMessage({ conversationId, content }),
-    onMutate: async (content: string) => {
-      await queryClient.cancelQueries({
-        queryKey: ["messages", conversationId],
-      });
+    mutationFn: (payload: SendMessagePayload) =>
+      api.post(`/inbox/conversations/${payload.conversationId}/messages`, {
+        text: payload.text,
+      }),
 
-      const previousMessages = queryClient.getQueryData<any>([
-        "messages",
-        conversationId,
-      ]);
+    onMutate: async (newMessagePayload) => {
+      const queryKey = ["messages", newMessagePayload.conversationId];
+      await queryClient.cancelQueries({ queryKey });
 
-      const tempId = `temp_${Date.now()}`;
       const optimisticMessage: Message = {
-        id: tempId,
-        temp_id: tempId,
-        content,
-        sender: {
-          id: "shop_user_id_placeholder",
-          name: "Your Shop",
-        },
+        id: uuidv4(),
+        conversationId: newMessagePayload.conversationId,
+        content: newMessagePayload.text,
         status: "sending",
-        created_at: new Date().toISOString(),
+        fromCustomer: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        attachments: [],
+        senderId: "me",
       };
 
-      queryClient.setQueryData(["messages", conversationId], (oldData: any) => {
-        const newData = { ...oldData };
-        if (newData.pages && newData.pages.length > 0) {
-          newData.pages[0].data.unshift(optimisticMessage);
-        }
-        return newData;
-      });
+      queryClient.setQueryData<InfiniteData<PaginatedResponse<Message>>>(
+        queryKey,
+        (oldData) => {
+          const newData = oldData
+            ? JSON.parse(JSON.stringify(oldData))
+            : { pages: [], pageParams: [1] };
 
-      return { previousMessages, tempId };
+          if (newData.pages.length > 0) {
+            newData.pages[0].data.unshift(optimisticMessage);
+          } else {
+            newData.pages.push({
+              data: [optimisticMessage],
+              total: 1,
+              page: 1,
+              limit: 20,
+            });
+          }
+          return newData;
+        }
+      );
+
+      return { optimisticMessageId: optimisticMessage.id };
     },
-    onError: (_err, _content, context) => {
-      if (context?.previousMessages) {
-        queryClient.setQueryData(
-          ["messages", conversationId],
-          context.previousMessages
+
+    onSuccess: (result, variables, context) => {
+      const queryKey = ["messages", variables.conversationId];
+      const finalMessage = result.data;
+      queryClient.setQueryData<InfiniteData<PaginatedResponse<Message>>>(
+        queryKey,
+        (oldData) => {
+          if (!oldData) return oldData;
+          const newPages = oldData.pages.map((page) => ({
+            ...page,
+            data: page.data.map((msg) =>
+              msg.id === context?.optimisticMessageId ? finalMessage : msg
+            ),
+          }));
+          return { ...oldData, pages: newPages };
+        }
+      );
+    },
+
+    onError: (_error, variables, context) => {
+      const queryKey = ["messages", variables.conversationId];
+      if (context?.optimisticMessageId) {
+        queryClient.setQueryData<InfiniteData<PaginatedResponse<Message>>>(
+          queryKey,
+          (oldData) => {
+            if (!oldData) return oldData;
+            const newPages = oldData.pages.map((page) => ({
+              ...page,
+              data: page.data.map((msg) =>
+                msg.id === context.optimisticMessageId
+                  ? { ...msg, status: "failed" as MessageStatus }
+                  : msg
+              ),
+            }));
+            return { ...oldData, pages: newPages };
+          }
         );
       }
-      // Update temp message status to 'failed'
-      queryClient.setQueryData(["messages", conversationId], (oldData: any) => {
-        const newData = { ...oldData };
-        const pageIndex = newData.pages.findIndex((p: any) =>
-          p.data.some((m: Message) => m.id === context?.tempId)
-        );
-        if (pageIndex > -1) {
-          const messageIndex = newData.pages[pageIndex].data.findIndex(
-            (m: Message) => m.id === context?.tempId
-          );
-          if (messageIndex > -1) {
-            newData.pages[pageIndex].data[messageIndex].status = "failed";
-          }
-        }
-        return newData;
+    },
+
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["messages", variables.conversationId],
       });
-    },
-    onSuccess: (_data, _variables, _context) => {
-      // Logic to update the message with the real ID from the server will be handled
-      // by the `message:status:updated` WebSocket event to prevent race conditions.
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+};
+
+export const useReplyToComment = (facebookPostId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: ReplyCommentPayload) =>
+      api.post(`/inbox/comments/${payload.parentCommentId}/replies`, {
+        text: payload.text,
+      }),
+
+    onMutate: async (newReplyPayload) => {
+      const queryKey = ["comments", facebookPostId];
+      await queryClient.cancelQueries({ queryKey });
+
+      const optimisticComment: Comment = {
+        id: uuidv4(),
+        content: newReplyPayload.text,
+        status: "sending",
+        fromCustomer: false,
+        createdAt: new Date().toISOString(),
+        parentCommentId: newReplyPayload.parentCommentId,
+        facebookPostId: facebookPostId,
+        facebookCommentId: null,
+        senderId: "me",
+      };
+
+      queryClient.setQueryData<InfiniteData<PaginatedResponse<Comment>>>(
+        queryKey,
+        (oldData) => {
+          const newData = oldData
+            ? JSON.parse(JSON.stringify(oldData))
+            : { pages: [], pageParams: [1] };
+          if (newData.pages.length > 0) {
+            newData.pages[0].data.unshift(optimisticComment);
+          } else {
+            newData.pages.push({
+              data: [optimisticComment],
+              total: 1,
+              page: 1,
+              limit: 20,
+            });
+          }
+          return newData;
+        }
+      );
+
+      return { optimisticCommentId: optimisticComment.id };
+    },
+
+    onSuccess: (result, _variables, context) => {
+      const queryKey = ["comments", facebookPostId];
+      const finalComment = result.data;
+      queryClient.setQueryData<InfiniteData<PaginatedResponse<Comment>>>(
+        queryKey,
+        (oldData) => {
+          if (!oldData) return oldData;
+          const newPages = oldData.pages.map((page) => ({
+            ...page,
+            data: page.data.map((c) =>
+              c.id === context?.optimisticCommentId ? finalComment : c
+            ),
+          }));
+          return { ...oldData, pages: newPages };
+        }
+      );
+    },
+
+    onError: (_error, _variables, context) => {
+      const queryKey = ["comments", facebookPostId];
+      if (context?.optimisticCommentId) {
+        queryClient.setQueryData<InfiniteData<PaginatedResponse<Comment>>>(
+          queryKey,
+          (oldData) => {
+            if (!oldData) return oldData;
+            const newPages = oldData.pages.map((page) => ({
+              ...page,
+              data: page.data.map((c) =>
+                c.id === context.optimisticCommentId
+                  ? { ...c, status: "failed" as CommentStatus }
+                  : c
+              ),
+            }));
+            return { ...oldData, pages: newPages };
+          }
+        );
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", facebookPostId] });
     },
   });
 };

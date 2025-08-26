@@ -1,103 +1,79 @@
-import { useParams } from "react-router-dom";
-import {
-  useMessagesQuery,
-  useSendMessageMutation,
-} from "../../../services/inboxApi";
-import React, { useState } from "react";
+// src/components/features/inbox/MessagePane.tsx
+import { Fragment } from "react";
+import { useGetMessages } from "../../../services/inboxApi";
+import MessageComposer from "./MessageComposer"; // Import component mới
 import { Button } from "../../ui/Button";
-import { Input } from "../../ui/Input";
+import { cn } from "../../../lib/utils";
 
-const MessageComposer = ({ conversationId }: { conversationId: string }) => {
-  const [content, setContent] = useState("");
-  const { mutate: sendMessage, isPending } =
-    useSendMessageMutation(conversationId);
+interface MessagePaneProps {
+  conversationId: string | null;
+}
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (content.trim()) {
-      sendMessage(content.trim());
-      setContent("");
-    }
-  };
-
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex gap-2 p-4 border-t border-neutral-200"
-    >
-      <Input
-        placeholder="Type a message..."
-        className="flex-1"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        disabled={isPending}
-      />
-      <Button type="submit" isLoading={isPending}>
-        Send
-      </Button>
-    </form>
-  );
-};
-
-const MessagePane = () => {
-  const { conversationId } = useParams<{ conversationId: string }>();
-
+const MessagePane = ({ conversationId }: MessagePaneProps) => {
   const {
     data,
-    isLoading,
-    isError,
+    error,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useMessagesQuery(conversationId);
+    status,
+  } = useGetMessages(conversationId);
 
   if (!conversationId) {
     return (
-      <div className="flex-1 flex items-center justify-center text-neutral-600">
+      <div className="flex flex-1 items-center justify-center text-neutral-500">
         <p>Select a conversation to start messaging.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-white">
+    <div className="flex flex-1 flex-col bg-white border-l border-neutral-200">
       <div className="p-4 border-b border-neutral-200">
         <h2 className="font-semibold">Conversation {conversationId}</h2>
       </div>
       <div className="flex-1 p-4 overflow-y-auto flex flex-col-reverse">
-        {/* Messages are rendered here */}
-        {isLoading && <p>Loading messages...</p>}
-        {isError && <p>Error loading messages.</p>}
-
-        {hasNextPage && (
-          <div className="text-center">
-            <Button
-              onClick={() => fetchNextPage()}
-              disabled={isFetchingNextPage}
-              variant="secondary"
-            >
-              {isFetchingNextPage ? "Loading more..." : "Load older messages"}
-            </Button>
-          </div>
-        )}
-
-        {data?.pages.map((page, i) => (
-          <React.Fragment key={i}>
-            {page.data.map((message: any) => (
-              <div
-                key={message.id}
-                className={`p-2 my-1 rounded-lg max-w-xs ${
-                  message.fromCustomer
-                    ? "bg-neutral-200 self-start"
-                    : "bg-primary-500 text-white self-end"
-                }`}
-              >
-                <p>{message.content}</p>
-                <span className="text-xs opacity-70">{message.status}</span>
+        {status === "pending" ? (
+          <p>Loading messages...</p>
+        ) : status === "error" ? (
+          <p>Error: {error.message}</p>
+        ) : (
+          <>
+            {hasNextPage && (
+              <div className="text-center">
+                <Button
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  variant="secondary"
+                >
+                  {isFetchingNextPage
+                    ? "Loading more..."
+                    : "Load Older Messages"}
+                </Button>
               </div>
+            )}
+            {data.pages.map((page, i) => (
+              <Fragment key={i}>
+                {page.data.map((message) => (
+                  <div
+                    key={message.id}
+                    className={cn(
+                      "p-2 my-1 rounded-lg max-w-xs",
+                      message.fromCustomer
+                        ? "bg-gray-200 self-start"
+                        : "bg-blue-500 text-white self-end",
+                      message.status === "sending" && "opacity-60",
+                      message.status === "failed" && "bg-red-500"
+                    )}
+                  >
+                    <p>{message.content}</p>
+                    {/* Thêm logic hiển thị trạng thái (tick, icon lỗi) ở đây */}
+                  </div>
+                ))}
+              </Fragment>
             ))}
-          </React.Fragment>
-        ))}
+          </>
+        )}
       </div>
       <MessageComposer conversationId={conversationId} />
     </div>

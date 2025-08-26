@@ -1,5 +1,4 @@
 import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import api from "../../../lib/api";
 import { cn } from "../../../lib/utils";
@@ -23,10 +22,17 @@ const getConversations = async ({
   };
 };
 
-const ConversationList = () => {
-  const { pageId, conversationId } = useParams();
-  const navigate = useNavigate();
+interface ConversationListProps {
+  pageId: string;
+  onConversationSelect: (conversationId: string | null) => void;
+  selectedConversationId: string | null;
+}
 
+const ConversationList = ({
+  pageId,
+  onConversationSelect,
+  selectedConversationId,
+}: ConversationListProps) => {
   const { data, fetchNextPage, hasNextPage, isLoading, isError } =
     useInfiniteQuery({
       queryKey: ["conversations", pageId],
@@ -53,12 +59,10 @@ const ConversationList = () => {
           {page.data.map((conv: any) => (
             <div
               key={conv.id}
-              onClick={() =>
-                navigate(`/dashboard/page/${pageId}/conversation/${conv.id}`)
-              }
+              onClick={() => onConversationSelect(conv.id.toString())}
               className={cn(
                 "p-4 border-b border-neutral-200 cursor-pointer hover:bg-neutral-100",
-                conv.id === parseInt(conversationId || "")
+                conv.id.toString() === selectedConversationId
                   ? "bg-primary-100"
                   : ""
               )}

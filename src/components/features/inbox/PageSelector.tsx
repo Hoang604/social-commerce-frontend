@@ -1,4 +1,3 @@
-import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../../lib/api";
 import { cn } from "../../../lib/utils";
@@ -8,9 +7,12 @@ const getConnectedPages = async () => {
   return data;
 };
 
-const PageSelector = () => {
-  const navigate = useNavigate();
-  const { pageId } = useParams();
+interface PageSelectorProps {
+  selectedPageId: string | null;
+  onPageChange: (pageId: string | null) => void;
+}
+
+const PageSelector = ({ selectedPageId, onPageChange }: PageSelectorProps) => {
   const { data: pages, isLoading } = useQuery({
     queryKey: ["connectedPages"],
     queryFn: getConnectedPages,
@@ -25,10 +27,10 @@ const PageSelector = () => {
         {pages?.map((page: any) => (
           <li key={page.id}>
             <button
-              onClick={() => navigate(`/dashboard/page/${page.id}`)}
+              onClick={() => onPageChange(page.id)}
               className={cn(
                 "w-full text-left p-2 rounded-md",
-                page.id === pageId
+                page.id === selectedPageId
                   ? "bg-primary-100 text-primary-600 font-semibold"
                   : "hover:bg-neutral-100"
               )}
