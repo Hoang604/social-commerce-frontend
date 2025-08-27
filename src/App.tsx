@@ -1,16 +1,27 @@
+// src/App.tsx
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuthStore } from "./stores/authStore";
+import type { JSX } from "react";
+
+// --- Components & Pages ---
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/auth/LoginPage";
-import { useAuthStore } from "./stores/authStore";
 import DashboardPage from "./pages/DashboardPage";
-import MessagePaneRoute from "./components/features/inbox/MessagePaneRoute";
 import { SocketProvider } from "./contexts/SocketContext";
 import RegisterPage from "./pages/auth/RegisterPage";
 import Verify2faPage from "./pages/auth/Verify2faPage";
-import type { JSX } from "react";
+
+// --- New Imports ---
+import { SettingsLayout } from "./pages/settings/SettingsLayout";
+import { ProfilePage } from "./pages/settings/ProfilePage";
+import { SecurityPage } from "./pages/settings/SecurityPage";
+import { ConnectionsPage } from "./pages/settings/ConnectionsPage";
+import { DashboardLayout } from "./components/layout/DashboardLayout";
+import { FacebookCallbackPage } from "./pages/FacebookCallbackPage";
+import MessagePaneRoute from "./components/features/inbox/MessagePaneRoute";
+
 /**
- * Component này dùng để bọc các route công khai (Login, Register).
- * Nếu người dùng đã đăng nhập, nó sẽ tự động chuyển hướng họ đến dashboard.
+ * Bọc các route công khai. Tự động chuyển hướng nếu đã đăng nhập.
  */
 const PublicRoute = ({ children }: { children: JSX.Element }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -20,7 +31,7 @@ const PublicRoute = ({ children }: { children: JSX.Element }) => {
 function App() {
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* === Public Routes === */}
       <Route
         path="/login"
         element={
@@ -37,16 +48,22 @@ function App() {
           </PublicRoute>
         }
       />
-      <Route path="/verify-2fa" element={<Verify2faPage />} />{" "}
-      {/* Không cần PublicRoute vì đây là một phần của luồng login */}
-      {/* Protected Routes */}
+      <Route path="/verify-2fa" element={<Verify2faPage />} />
+
+      {/* === Protected Routes === */}
+
+      {/* Dashboard Area */}
       <Route
         path="/dashboard/*"
         element={
           <ProtectedRoute>
             <SocketProvider>
+              {/* Sử dụng DashboardLayout cho toàn bộ khu vực dashboard */}
               <Routes>
-                <Route path="/" element={<DashboardPage />}>
+                {/* Route mặc định cho /dashboard sẽ render DashboardPage */}
+                <Route path="/" element={<DashboardLayout />}>
+                  {/* Các route con của DashboardPage */}
+                  <Route index element={<DashboardPage />} />
                   <Route
                     path="page/:pageId"
                     element={
@@ -65,7 +82,35 @@ function App() {
           </ProtectedRoute>
         }
       />
-      {/* Fallback route: nếu không khớp route nào, chuyển về login */}
+
+      {/* Settings Area */}
+      <Route
+        path="/settings/*"
+        element={
+          <ProtectedRoute>
+            <Routes>
+              <Route path="/" element={<SettingsLayout />}>
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="security" element={<SecurityPage />} />
+                <Route path="connections" element={<ConnectionsPage />} />
+                <Route index element={<Navigate to="profile" replace />} />
+              </Route>
+            </Routes>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Facebook Callback Route */}
+      <Route
+        path="/facebook/callback"
+        element={
+          <ProtectedRoute>
+            <FacebookCallbackPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Fallback Route */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

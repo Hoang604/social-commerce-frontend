@@ -1,3 +1,4 @@
+// src/lib/api.ts
 import axios from "axios";
 import { useAuthStore } from "../stores/authStore";
 
@@ -6,41 +7,85 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Interceptor cũ: Thêm Access Token vào mỗi request
-api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().accessToken;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// --- Interceptor 1: Ghi log và đính kèm Access Token cho mỗi Request ---
+api.interceptors.request.use(
+  (config) => {
+    // Lấy token từ store
+    const token = useAuthStore.getState().accessToken;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
 
-// Interceptor MỚI: Xử lý khi Access Token hết hạn
+    // --- LOGGING ---
+    console.groupCollapsed(
+      `[API Request] >> ${config.method?.toUpperCase()} ${config.url}`
+    );
+    console.log("Headers:", config.headers);
+    if (config.data) {
+      console.log("Body:", config.data);
+    }
+    console.groupEnd();
+    // --- END LOGGING ---
+
+    return config;
+  },
+  (error) => {
+    // --- LOGGING ---
+    console.error("[API Request Error]", error);
+    // --- END LOGGING ---
+    return Promise.reject(error);
+  }
+);
+
+// --- Interceptor 2: Ghi log và xử lý Response/Error ---
 api.interceptors.response.use(
-  (response) => response, // Nếu response thành công, không làm gì cả
+  (response) => {
+    // --- LOGGING ---
+    console.groupCollapsed(
+      `[API Response] << ${
+        response.status
+      } ${response.config.method?.toUpperCase()} ${response.config.url}`
+    );
+    console.log("Data:", response.data);
+    console.groupEnd();
+    // --- END LOGGING ---
+
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
-    // Kiểm tra nếu lỗi là 401 và request này chưa phải là request thử lại
+
+    // --- LOGGING ---
+    // Log lỗi trước khi xử lý
+    console.groupCollapsed(
+      `[API Error] << ${
+        error.response?.status
+      } ${originalRequest.method?.toUpperCase()} ${originalRequest.url}`
+    );
+    console.error("Error Response:", error.response?.data);
+    console.error("Original Request:", originalRequest);
+    console.groupEnd();
+    // --- END LOGGING ---
+
+    // Logic xử lý refresh token đã có
     if (error.response.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true; // Đánh dấu là đã thử lại
+      originalRequest._retry = true;
 
       try {
-        // Gọi đến endpoint /refresh để lấy accessToken mới
-        // Backend sẽ trả về { accessToken, user }
-        const { data } = await api.post("/auth/refresh");
+        console.log("Access Token expired. Attempting to refresh...");
+        const { data } = await api.get("/auth/refresh");
 
-        // SỬA LỖI Ở ĐÂY: Dùng hàm login() để cập nhật store
-        useAuthStore.getState().login(data.user, data.accessToken);
+        useAuthStore.getState().setAccessToken(data.accessToken);
+        console.log("Token refreshed successfully.");
 
-        // Cập nhật header của request gốc với token mới
         originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
 
-        // Thực hiện lại request gốc đã thất bại
+        console.log("Retrying original request...");
         return api(originalRequest);
       } catch (refreshError) {
-        // Nếu refresh cũng thất bại, logout người dùng
+        console.error("Failed to refresh token. Logging out.", refreshError);
         useAuthStore.getState().logout();
-        window.location.href = "/login"; // Chuyển hướng về trang đăng nhập
+        window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }

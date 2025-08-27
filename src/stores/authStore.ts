@@ -1,3 +1,4 @@
+// src/stores/authStore.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -15,6 +16,7 @@ interface AuthState {
   login: (userData: User, token: string) => void;
   logout: () => void;
   setUser: (userData: User) => void;
+  setAccessToken: (token: string | null) => void; // <-- THÊM ACTION MỚI
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -26,13 +28,15 @@ export const useAuthStore = create<AuthState>()(
       login: (userData, token) =>
         set({ user: userData, accessToken: token, isAuthenticated: true }),
       logout: () => {
-        // Cần thêm logic gọi API logout ở đây trong tương lai
         set({ user: null, accessToken: null, isAuthenticated: false });
       },
       setUser: (userData) => set((state) => ({ ...state, user: userData })),
+      // --- ĐỊNH NGHĨA ACTION MỚI ---
+      setAccessToken: (token) =>
+        set({ accessToken: token, isAuthenticated: !!token }),
     }),
     {
-      name: "auth-storage", // Tên key trong localStorage
+      name: "auth-storage",
     }
   )
 );
