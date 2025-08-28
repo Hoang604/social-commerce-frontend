@@ -3,117 +3,142 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../lib/api";
 
 // === TYPES ===
-// SỬA LỖI: Bổ sung các định nghĩa type cần thiết cho frontend
+// Định nghĩa các kiểu dữ liệu cho request và response
 export interface User {
   id: string;
   email: string;
   fullName: string;
   avatarUrl: string;
   isTwoFactorAuthenticationEnabled: boolean;
-  // Các trường khác có thể được thêm vào khi cần
 }
-// === TYPES ===
+
 interface UpdateProfilePayload {
   fullName?: string;
   avatarUrl?: string;
 }
 
-interface Generate2faResponse {
-  otpAuthUrl: string;
+// Dữ liệu backend trả về khi tạo mã QR
+interface Generate2FAResponse {
+  qrCodeDataURL: string;
 }
 
-interface TurnOn2faPayload {
-  twoFactorAuthenticationCode: string;
-}
-
-interface TurnOff2faPayload {
-  password?: string;
-  twoFactorAuthenticationCode?: string;
+// Dữ liệu backend trả về khi bật 2FA thành công
+interface TurnOn2FAResponse {
+  message: string;
+  recoveryCodes: string[];
 }
 
 interface ConnectedPage {
   id: string;
-  name: string;
+  facebookPageId: string;
+  pageName: string;
   createdAt: string;
 }
 
 // === QUERY KEYS ===
 const settingsKeys = {
-  profile: ["userProfile"] as const,
+  profile: ["me"] as const, // Đổi thành 'me' để khớp với các file khác
   connectedPages: ["connectedPages"] as const,
 };
 
-// === USER PROFILE HOOKS ===
+// === API FUNCTIONS ===
+// Tách logic gọi API ra các hàm riêng biệt
+export const fetchUserProfile = async (): Promise<User> => {
+  const response = await api.get("/user/me");
+  return response.data;
+};
+
+export const updateProfile = async (
+  payload: UpdateProfilePayload
+): Promise<User> => {
+  const response = await api.patch("/user/me", payload);
+  return response.data;
+};
+
+export const generate2FASecret = async (): Promise<Generate2FAResponse> => {
+  const response = await api.post("/2fa/generate");
+  return response.data;
+};
+
+export const turnOn2FA = async (code: string): Promise<TurnOn2FAResponse> => {
+  const response = await api.post("/2fa/turn-on", { code });
+  return response.data;
+};
+
+export const disable2FA = async (
+  password: string
+): Promise<{ message: string }> => {
+  const response = await api.post("/2fa/turn-off", { password });
+  return response.data;
+};
+
+export const fetchConnectedPages = async (): Promise<ConnectedPage[]> => {
+  const response = await api.get("/connected-pages");
+  return response.data;
+};
+
+export const disconnectPage = async (pageId: string): Promise<void> => {
+  await api.delete(`/connected-pages/${pageId}`);
+};
+
+// === REACT QUERY HOOKS ===
+// Các hooks này sẽ sử dụng các hàm API ở trên
+
 export const useUserProfileQuery = () => {
   return useQuery<User>({
     queryKey: settingsKeys.profile,
-    queryFn: async () => {
-      const response = await api.get("/user/me");
-      return response.data;
-    },
+    queryFn: fetchUserProfile,
   });
 };
 
 export const useUpdateProfileMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: UpdateProfilePayload) =>
-      api.patch("/user/me", payload),
+    mutationFn: updateProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.profile });
-      // Here you would typically show a success toast
-    },
-    onError: (error) => {
-      // Here you would typically show an error toast
-      console.error("Failed to update profile:", error);
     },
   });
 };
 
-// === 2FA SECURITY HOOKS ===
 export const useGenerate2faMutation = () => {
-  return useMutation<Generate2faResponse>({
-    mutationFn: () => api.post("/2fa/generate"),
+  return useMutation<Generate2FAResponse>({
+    mutationFn: generate2FASecret,
   });
 };
 
 export const useTurnOn2faMutation = () => {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: TurnOn2faPayload) =>
-      api.post("/2fa/turn-on", payload),
+  return useMutation<TurnOn2FAResponse, Error, string>({
+    // <TData, TError, TVariables>
+    mutationFn: (code: string) => turnOn2FA(code),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.profile });
     },
   });
 };
 
-export const useTurnOff2faMutation = () => {
+export const useDisable2faMutation = () => {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: TurnOff2faPayload) =>
-      api.post("/2fa/turn-off", payload),
+  return useMutation<{ message: string }, Error, string>({
+    mutationFn: (password: string) => disable2FA(password),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.profile });
     },
   });
 };
 
-// === CONNECTIONS HOOKS ===
 export const useConnectedPagesQuery = () => {
   return useQuery<ConnectedPage[]>({
     queryKey: settingsKeys.connectedPages,
-    queryFn: async () => {
-      const response = await api.get("/connected-pages");
-      return response.data;
-    },
+    queryFn: fetchConnectedPages,
   });
 };
 
 export const useDisconnectPageMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (pageId: string) => api.delete(`/connected-pages/${pageId}`),
+    mutationFn: disconnectPage,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.connectedPages });
     },

@@ -20,6 +20,7 @@ import { DashboardLayout } from "./components/layout/DashboardLayout";
 import { FacebookCallbackPage } from "./pages/FacebookCallbackPage";
 import MessagePaneRoute from "./components/features/inbox/MessagePaneRoute";
 import { SocialCallbackPage } from "./pages/auth/SocialCallbackPage";
+import { Toaster } from "./components/ui/Toaster";
 
 /**
  * Bọc các route công khai. Tự động chuyển hướng nếu đã đăng nhập.
@@ -31,89 +32,90 @@ const PublicRoute = ({ children }: { children: JSX.Element }) => {
 
 function App() {
   return (
-    <Routes>
-      {/* === Public Routes === */}
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <LoginPage />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <PublicRoute>
-            <RegisterPage />
-          </PublicRoute>
-        }
-      />
-      <Route path="/verify-2fa" element={<Verify2faPage />} />
-      <Route
-        path="/auth/social-callback"
-        element={<SocialCallbackPage />}
-      />{" "}
-      {/* <-- ROUTE MỚI */}
-      {/* === Protected Routes === */}
-      {/* Dashboard Area */}
-      <Route
-        path="/dashboard/*"
-        element={
-          <ProtectedRoute>
-            <SocketProvider>
-              {/* Sử dụng DashboardLayout cho toàn bộ khu vực dashboard */}
+    // Sử dụng React.Fragment (<>) để bọc cả Routes và Toaster
+    <>
+      <Routes>
+        {/* === Public Routes === */}
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <LoginPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <RegisterPage />
+            </PublicRoute>
+          }
+        />
+        <Route path="/verify-2fa" element={<Verify2faPage />} />
+        <Route path="/auth/social-callback" element={<SocialCallbackPage />} />
+        {/* === Protected Routes === */}
+        {/* Dashboard Area */}
+        <Route
+          path="/dashboard/*"
+          element={
+            <ProtectedRoute>
+              <SocketProvider>
+                {/* Sử dụng DashboardLayout cho toàn bộ khu vực dashboard */}
+                <Routes>
+                  {/* Route mặc định cho /dashboard sẽ render DashboardPage */}
+                  <Route path="/" element={<DashboardLayout />}>
+                    {/* Các route con của DashboardPage */}
+                    <Route index element={<DashboardPage />} />
+                    <Route
+                      path="page/:pageId"
+                      element={
+                        <div className="flex-1 flex items-center justify-center text-neutral-600">
+                          <p>Select a conversation.</p>
+                        </div>
+                      }
+                    />
+                    <Route
+                      path="page/:pageId/conversation/:conversationId"
+                      element={<MessagePaneRoute />}
+                    />
+                  </Route>
+                </Routes>
+              </SocketProvider>
+            </ProtectedRoute>
+          }
+        />
+        {/* Settings Area */}
+        <Route
+          path="/settings/*"
+          element={
+            <ProtectedRoute>
               <Routes>
-                {/* Route mặc định cho /dashboard sẽ render DashboardPage */}
-                <Route path="/" element={<DashboardLayout />}>
-                  {/* Các route con của DashboardPage */}
-                  <Route index element={<DashboardPage />} />
-                  <Route
-                    path="page/:pageId"
-                    element={
-                      <div className="flex-1 flex items-center justify-center text-neutral-600">
-                        <p>Select a conversation.</p>
-                      </div>
-                    }
-                  />
-                  <Route
-                    path="page/:pageId/conversation/:conversationId"
-                    element={<MessagePaneRoute />}
-                  />
+                <Route path="/" element={<SettingsLayout />}>
+                  <Route path="profile" element={<ProfilePage />} />
+                  <Route path="security" element={<SecurityPage />} />
+                  <Route path="connections" element={<ConnectionsPage />} />
+                  <Route index element={<Navigate to="profile" replace />} />
                 </Route>
               </Routes>
-            </SocketProvider>
-          </ProtectedRoute>
-        }
-      />
-      {/* Settings Area */}
-      <Route
-        path="/settings/*"
-        element={
-          <ProtectedRoute>
-            <Routes>
-              <Route path="/" element={<SettingsLayout />}>
-                <Route path="profile" element={<ProfilePage />} />
-                <Route path="security" element={<SecurityPage />} />
-                <Route path="connections" element={<ConnectionsPage />} />
-                <Route index element={<Navigate to="profile" replace />} />
-              </Route>
-            </Routes>
-          </ProtectedRoute>
-        }
-      />
-      {/* Facebook Callback Route */}
-      <Route
-        path="/facebook/callback"
-        element={
-          <ProtectedRoute>
-            <FacebookCallbackPage />
-          </ProtectedRoute>
-        }
-      />
-      {/* Fallback Route */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+            </ProtectedRoute>
+          }
+        />
+        {/* Facebook Callback Route */}
+        <Route
+          path="/facebook/callback"
+          element={
+            <ProtectedRoute>
+              <FacebookCallbackPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Fallback Route */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+      {/* Di chuyển Toaster ra ngoài Routes */}
+      <Toaster />
+    </>
   );
 }
 

@@ -37,22 +37,29 @@ export const useAuthStore = create<AuthState>()(
       setAccessToken: (token) =>
         set({ accessToken: token, isAuthenticated: !!token }),
 
-      // --- ĐỊNH NGHĨA ACTION MỚI ---
       verifySessionAndFetchUser: async () => {
         try {
-          const { data } = await api.get("/user/me");
-          // `data` được kỳ vọng là { user, accessToken }
-          // Backend sẽ trả về accessToken mới sau social login
-          if (data.user && data.accessToken) {
-            get().login(data.user, data.accessToken);
-            return Promise.resolve();
+          // 1. Request này sẽ thành công (sau khi được interceptor xử lý)
+          // và `data` lúc này chính là đối tượng `user`.
+          const { data: user } = await api.get<User>("/user/me");
+
+          // 2. Kiểm tra xem có nhận được đối tượng user hợp lệ không.
+          if (user && user.id) {
+            // 3. accessToken mới đã được lưu vào store bởi interceptor.
+            //    Chúng ta chỉ cần lấy nó ra từ state hiện tại.
+            const accessToken = get().accessToken;
+
+            if (accessToken) {
+              // 4. Gọi action `login` để cập nhật đầy đủ state với `user` và `accessToken`.
+              get().login(user, accessToken);
+              return; // Hoàn thành và resolve Promise
+            }
           }
-          // Nếu không có accessToken, có thể user đã có session nhưng cần 2FA
-          // Trường hợp này sẽ được xử lý trong block catch
-          throw new Error("Invalid session data");
+
+          // Nếu không có user hoặc accessToken, có lỗi logic xảy ra.
+          throw new Error("Invalid session data from server");
         } catch (error) {
           const axiosError = error as AxiosError;
-          // Backend trả về 401 và một message đặc biệt khi cần 2FA
           if (
             axiosError.response?.status === 401 &&
             (axiosError.response?.data as any)?.message ===

@@ -1,62 +1,71 @@
-// src/pages/auth/Verify2faPage.tsx
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useLoginMutation } from "../../services/authApi"; // SỬA LỖI: Dùng lại login mutation
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
+// SỬA LỖI: Import hàm verify2FA mới
+import { verify2FA } from "../../services/authApi";
+import AuthLayout from "../../components/layout/AuthLayout";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import AuthLayout from "../../components/layout/AuthLayout";
-import { toast } from "../../components/ui/Toast";
+import { useToast } from "../../components/ui/use-toast";
 
 const Verify2faPage = () => {
-  const navigate = useNavigate();
-  const loginAction = useAuthStore((state) => state.login);
-
-  // SỬA LỖI: Sử dụng useLoginMutation để hoàn tất đăng nhập sau khi có mã 2FA
-  const { mutate: verifyAndLogin, isPending } = useLoginMutation({
-    onSuccess: (data) => {
-      toast.success("Successfully authenticated!");
-      loginAction(data.user, data.accessToken);
-      navigate("/dashboard", { replace: true });
-    },
-    onError: (error: any) => {
-      const errorMessage =
-        error.response?.data?.message || "Invalid authentication code.";
-      toast.error(errorMessage);
-    },
-  });
-
   const [code, setCode] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuthStore();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const from = location.state?.from?.pathname || "/dashboard";
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (code.length !== 6 || !/^\d{6}$/.test(code)) {
-      toast.error("Please enter a valid 6-digit code.");
+    if (code.length !== 6) {
+      toast({
+        title: "Invalid Code",
+        description: "Please enter a 6-digit code.",
+        variant: "destructive",
+      });
       return;
     }
-    // Gửi mã 2FA như một phần của thông tin đăng nhập
-    verifyAndLogin({ code });
+    setIsLoading(true);
+    try {
+      // Gọi hàm verify2FA đã được import
+      const response = await verify2FA(code);
+      // Lưu token và thông tin người dùng vào store
+      login(response.user, response.accessToken);
+      navigate(from, { replace: true });
+    } catch (error) {
+      toast({
+        title: "Authentication Failed",
+        description: "The code is incorrect. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <AuthLayout title="Two-Factor Authentication">
-      <div className="text-center text-sm text-neutral-600 mb-6">
-        <p>Please enter the 6-digit code from your authenticator app.</p>
-      </div>
+      <p className="text-center text-sm text-muted-foreground mb-4">
+        Please enter the 6-digit code from your authenticator app.
+      </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
+          id="2fa-code"
           type="text"
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          placeholder="123456"
+          placeholder="000000"
           required
-          disabled={isPending}
           maxLength={6}
+          pattern="[0-9]{6}"
           inputMode="numeric"
-          pattern="\\d{6}"
+          autoComplete="one-time-code"
         />
-        <Button type="submit" size="lg" className="w-full" disabled={isPending}>
-          {isPending ? "Verifying..." : "Verify Code"}
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? "Verifying..." : "Verify"}
         </Button>
       </form>
     </AuthLayout>
