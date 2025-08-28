@@ -1,6 +1,7 @@
+// src/pages/auth/Verify2faPage.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useVerify2faMutation } from "../../services/authApi";
+import { useLoginMutation } from "../../services/authApi"; // SỬA LỖI: Dùng lại login mutation
 import { useAuthStore } from "../../stores/authStore";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -11,9 +12,9 @@ const Verify2faPage = () => {
   const navigate = useNavigate();
   const loginAction = useAuthStore((state) => state.login);
 
-  const { mutate: verifyCode, isPending } = useVerify2faMutation({
+  // SỬA LỖI: Sử dụng useLoginMutation để hoàn tất đăng nhập sau khi có mã 2FA
+  const { mutate: verifyAndLogin, isPending } = useLoginMutation({
     onSuccess: (data) => {
-      // Sau khi xác thực 2FA thành công, backend trả về accessToken và user
       toast.success("Successfully authenticated!");
       loginAction(data.user, data.accessToken);
       navigate("/dashboard", { replace: true });
@@ -33,7 +34,8 @@ const Verify2faPage = () => {
       toast.error("Please enter a valid 6-digit code.");
       return;
     }
-    verifyCode({ code });
+    // Gửi mã 2FA như một phần của thông tin đăng nhập
+    verifyAndLogin({ code });
   };
 
   return (
@@ -51,15 +53,10 @@ const Verify2faPage = () => {
           disabled={isPending}
           maxLength={6}
           inputMode="numeric"
-          pattern="\d{6}"
+          pattern="\\d{6}"
         />
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full"
-          isLoading={isPending}
-        >
-          Verify Code
+        <Button type="submit" size="lg" className="w-full" disabled={isPending}>
+          {isPending ? "Verifying..." : "Verify Code"}
         </Button>
       </form>
     </AuthLayout>

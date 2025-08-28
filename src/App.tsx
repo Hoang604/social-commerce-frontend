@@ -19,6 +19,7 @@ import { ConnectionsPage } from "./pages/settings/ConnectionsPage";
 import { DashboardLayout } from "./components/layout/DashboardLayout";
 import { FacebookCallbackPage } from "./pages/FacebookCallbackPage";
 import MessagePaneRoute from "./components/features/inbox/MessagePaneRoute";
+import { SocialCallbackPage } from "./pages/auth/SocialCallbackPage";
 
 /**
  * Bọc các route công khai. Tự động chuyển hướng nếu đã đăng nhập.
@@ -49,9 +50,12 @@ function App() {
         }
       />
       <Route path="/verify-2fa" element={<Verify2faPage />} />
-
+      <Route
+        path="/auth/social-callback"
+        element={<SocialCallbackPage />}
+      />{" "}
+      {/* <-- ROUTE MỚI */}
       {/* === Protected Routes === */}
-
       {/* Dashboard Area */}
       <Route
         path="/dashboard/*"
@@ -82,7 +86,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-
       {/* Settings Area */}
       <Route
         path="/settings/*"
@@ -99,7 +102,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-
       {/* Facebook Callback Route */}
       <Route
         path="/facebook/callback"
@@ -109,7 +111,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-
       {/* Fallback Route */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

@@ -2,97 +2,105 @@ import { useMutation } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import api from "../lib/api";
 
-// Định nghĩa interfaces cho response
-interface LoginResponse {
-  accessToken?: string;
-  user?: {
-    id: string;
-    email: string;
-    fullName: string;
-  };
-}
+// ========================================================================
+// TYPE DEFINITIONS - Định nghĩa cấu trúc dữ liệu một cách chặt chẽ
+// ========================================================================
 
-interface LoginCredentials {
+/**
+ * Đại diện cho đối tượng người dùng.
+ */
+interface User {
+  id: string;
   email: string;
-  password: string;
+  fullName: string;
 }
 
+/**
+ * Dữ liệu trả về sau khi đăng nhập thành công.
+ */
+interface AuthResponse {
+  accessToken: string;
+  user: User;
+}
+
+/**
+ * Dữ liệu cần thiết để đăng nhập.
+ * Có thể là email/password hoặc chỉ mã 2FA.
+ */
+interface LoginCredentials {
+  email?: string;
+  password?: string;
+  code?: string; // Dùng cho luồng xác thực 2 yếu tố
+}
+
+/**
+ * Dữ liệu cần thiết để đăng ký tài khoản mới.
+ */
 interface RegisterCredentials {
   fullName: string;
   email: string;
   password: string;
 }
 
-interface RegisterResponse {
-  message: string;
-  user?: {
-    id: string;
-    email: string;
-    fullName: string;
-  };
-}
+// ========================================================================
+// API FUNCTIONS - Các hàm bất đồng bộ để tương tác với backend
+// ========================================================================
 
-// --- Login Mutation ---
-const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
-  const { data } = await api.post("/auth/login", credentials);
+/**
+ * Gửi yêu cầu đăng nhập đến backend.
+ * Hàm này xử lý cả đăng nhập thông thường và xác thực 2FA.
+ * @param credentials - Thông tin đăng nhập (email/password hoặc code 2FA).
+ * @returns {Promise<AuthResponse>} Dữ liệu người dùng và access token.
+ */
+const loginUser = async (
+  credentials: LoginCredentials
+): Promise<AuthResponse> => {
+  const { data } = await api.post<AuthResponse>("/auth/login", credentials);
   return data;
 };
 
+/**
+ * Gửi yêu cầu đăng ký tài khoản mới đến backend.
+ * @param userData - Thông tin người dùng mới.
+ * @returns {Promise<User>} Thông tin người dùng vừa được tạo.
+ */
+const registerUser = async (userData: RegisterCredentials): Promise<User> => {
+  const { data } = await api.post<User>("/auth/register", userData);
+  return data;
+};
+
+// ========================================================================
+// CUSTOM HOOKS - Các hook của TanStack Query để sử dụng trong components
+// ========================================================================
+
+/**
+ * Hook để thực hiện mutation đăng nhập.
+ * Nó bao bọc hàm `loginUser` và có thể được sử dụng trong `LoginPage` và `Verify2faPage`.
+ */
 export const useLoginMutation = (
   options?: Omit<
-    UseMutationOptions<LoginResponse, Error, LoginCredentials>,
+    UseMutationOptions<AuthResponse, Error, LoginCredentials>,
     "mutationFn"
   >
 ) => {
   return useMutation({
-    mutationFn: login,
+    mutationFn: loginUser,
     ...options,
   });
 };
 
-// --- Register Mutation ---
-const register = async (
-  userData: RegisterCredentials
-): Promise<RegisterResponse> => {
-  console.log(
-    "API: Sending registration request to:",
-    `${api.defaults.baseURL}/auth/register`
-  );
-  console.log("API: Registration data:", { ...userData, password: "***" });
-
-  try {
-    const { data } = await api.post("/auth/register", userData);
-    console.log("API: Registration successful:", data);
-    return data;
-  } catch (error) {
-    console.error("API: Registration failed:", error);
-    throw error;
-  }
-};
-
+/**
+ * Hook để thực hiện mutation đăng ký.
+ * Nó bao bọc hàm `registerUser` và được sử dụng trong `RegisterPage`.
+ */
 export const useRegisterMutation = (
   options?: Omit<
-    UseMutationOptions<RegisterResponse, Error, RegisterCredentials>,
+    UseMutationOptions<User, Error, RegisterCredentials>,
     "mutationFn"
   >
 ) => {
   return useMutation({
-    mutationFn: register,
-    ...options,
-  });
-};
-
-// --- Verify 2FA Mutation ---
-const verify2fa = async (payload: { code: string }) => {
-  const { data } = await api.post("/2fa/authenticate", payload);
-  return data;
-};
-
-export const useVerify2faMutation = (
-  options?: UseMutationOptions<any, Error, { code: string }>
-) => {
-  return useMutation({
-    mutationFn: verify2fa,
+    mutationFn: registerUser,
     ...options,
   });
 };
