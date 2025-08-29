@@ -246,5 +246,3 @@ export const SecurityPage = () => {
     </div>
   );
 };
-
-// export default SecurityPage;

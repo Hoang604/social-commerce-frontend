@@ -39,17 +39,18 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-white">
-      <header className="p-4 border-b">
-        {/* Pass the correct handler to PageSelector */}
+    // Thêm class dark: cho màu nền chính
+    <div className="h-screen w-screen flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      {/* Thêm class dark: cho header và đường viền */}
+      <header className="p-4 border-b border-gray-200 dark:border-gray-700">
         <PageSelector
           selectedPageId={selectedPageId}
           onPageChange={handlePageChange}
         />
       </header>
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-1/4 border-r overflow-y-auto">
-          {/* Ensure ConversationList is only rendered when there is a selected page */}
+        {/* Thêm class dark: cho sidebar và đường viền */}
+        <div className="w-1/4 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
           {selectedPageId && !isLoadingPages ? (
             <ConversationList
               pageId={selectedPageId}
@@ -57,7 +58,8 @@ const DashboardPage = () => {
               selectedConversationId={selectedConversationId}
             />
           ) : (
-            <div className="p-4 text-center text-gray-500">
+            // Thêm class dark: cho văn bản fallback
+            <div className="p-4 text-center text-gray-500 dark:text-gray-400">
               {isLoadingPages ? "Loading pages..." : "Select a page to start."}
             </div>
           )}

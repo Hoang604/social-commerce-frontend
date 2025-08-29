@@ -1,3 +1,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Thêm các quy tắc này */
+@layer base {
+    :root {
+        /* Các biến màu cho chế độ sáng (mặc định) */
+        --background: 0 0% 100%;
+        --foreground: 222.2 84% 4.9%;
+        /* ... các biến màu khác nếu bạn muốn định nghĩa ... */
+    }
+
+    .dark {
+        /* Các biến màu cho chế độ tối */
+        --background: 222.2 84% 4.9%;
+        --foreground: 210 40% 98%;
+        /* ... */
+    }
+}
+
+body {
+    /* Sử dụng biến màu */
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+}

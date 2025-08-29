@@ -1,0 +1,83 @@
+// src/components/ui/PinInput.tsx
+import React, { useRef, useState } from "react";
+
+interface PinInputProps {
+  length: number;
+  onComplete: (pin: string) => void;
+}
+
+export const PinInput: React.FC<PinInputProps> = ({ length, onComplete }) => {
+  const [pin, setPin] = useState<string[]>(new Array(length).fill(""));
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const handleChange = (element: HTMLInputElement, index: number) => {
+    if (isNaN(Number(element.value))) return; // Chỉ cho phép nhập số
+
+    const newPin = [...pin];
+    newPin[index] = element.value;
+    setPin(newPin);
+
+    // Tự động focus ô tiếp theo
+    if (element.value !== "" && index < length - 1) {
+      inputRefs.current[index + 1]?.focus();
+    }
+
+    // Nếu đã điền đủ, gọi onComplete
+    const finalPin = newPin.join("");
+    if (finalPin.length === length) {
+      onComplete(finalPin);
+    }
+  };
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    // Xử lý phím Backspace
+    if (e.key === "Backspace" && pin[index] === "" && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData("text").slice(0, length);
+    if (!/^\d+$/.test(pasteData)) return; // Chỉ cho phép dán số
+
+    const newPin = [...pin];
+    for (let i = 0; i < pasteData.length; i++) {
+      if (i < length) {
+        newPin[i] = pasteData[i];
+      }
+    }
+    setPin(newPin);
+
+    const finalPin = newPin.join("");
+    if (finalPin.length === length) {
+      onComplete(finalPin);
+      inputRefs.current[length - 1]?.focus();
+    } else {
+      inputRefs.current[finalPin.length]?.focus();
+    }
+  };
+
+  return (
+    <div className="flex justify-center space-x-2" onPaste={handlePaste}>
+      {pin.map((digit, index) => (
+        <input
+          key={index}
+          ref={(el) => {
+            inputRefs.current[index] = el;
+          }}
+          type="text"
+          maxLength={1}
+          value={digit}
+          onChange={(e) => handleChange(e.target, index)}
+          onKeyDown={(e) => handleKeyDown(e, index)}
+          onFocus={(e) => e.target.select()}
+          className="w-12 h-12 text-center text-2xl font-semibold border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+        />
+      ))}
+    </div>
+  );
+};

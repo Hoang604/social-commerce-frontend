@@ -4,6 +4,9 @@ import App from "./App.tsx";
 import "./index.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
+import { initializeTheme } from "./stores/themeStore.ts";
+
+initializeTheme(); // <-- GỌI HÀM NÀY Ở ĐÂY
 
 const queryClient = new QueryClient();
 

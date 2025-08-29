@@ -5,8 +5,8 @@ import { useAuthStore } from "../../stores/authStore";
 import { verify2FA } from "../../services/authApi";
 import AuthLayout from "../../components/layout/AuthLayout";
 import { Button } from "../../components/ui/Button";
-import { Input } from "../../components/ui/Input";
 import { useToast } from "../../components/ui/use-toast";
+import { PinInput } from "../../components/ui/PinInput";
 
 const Verify2faPage = () => {
   const [code, setCode] = useState("");
@@ -52,18 +52,7 @@ const Verify2faPage = () => {
         Please enter the 6-digit code from your authenticator app.
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          id="2fa-code"
-          type="text"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="000000"
-          required
-          maxLength={6}
-          pattern="[0-9]{6}"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-        />
+        <PinInput length={6} onComplete={setCode} />
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? "Verifying..." : "Verify"}
         </Button>
