@@ -43,7 +43,7 @@ const ConversationList = ({
 
   if (!pageId) {
     return (
-      <div className="p-4 text-center text-neutral-600">
+      <div className="p-4 text-center text-muted-foreground">
         Please select a page to view conversations.
       </div>
     );
@@ -61,14 +61,12 @@ const ConversationList = ({
               key={conv.id}
               onClick={() => onConversationSelect(conv.id.toString())}
               className={cn(
-                "p-4 border-b border-neutral-200 cursor-pointer hover:bg-neutral-100",
-                conv.id.toString() === selectedConversationId
-                  ? "bg-primary-100"
-                  : ""
+                "p-4 border-b cursor-pointer hover:bg-accent",
+                conv.id.toString() === selectedConversationId ? "bg-accent" : ""
               )}
             >
               <p className="font-semibold">{conv.participant.name}</p>
-              <p className="text-sm text-neutral-600 truncate">
+              <p className="text-sm text-muted-foreground truncate">
                 {conv.lastMessageSnippet}
               </p>
             </div>
@@ -78,7 +76,7 @@ const ConversationList = ({
       {hasNextPage && (
         <button
           onClick={() => fetchNextPage()}
-          className="w-full p-2 text-primary-500"
+          className="w-full p-2 text-primary"
         >
           Load More
         </button>

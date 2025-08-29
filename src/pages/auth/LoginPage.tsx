@@ -26,7 +26,6 @@ const LoginPage = () => {
         error.response?.status === 401 &&
         error.response?.data?.message === "Two factor authentication required"
       ) {
-        // Lưu email vào session storage để trang 2FA có thể sử dụng nếu cần
         sessionStorage.setItem("emailFor2fa", email);
         navigate("/verify-2fa");
       } else {
@@ -44,7 +43,6 @@ const LoginPage = () => {
 
   const handleFacebookLogin = () => {
     setIsFacebookLoading(true);
-    // Trỏ trực tiếp đến endpoint của backend để bắt đầu luồng OAuth2
     const facebookAuthUrl = `${
       import.meta.env.VITE_API_BASE_URL
     }/auth/facebook`;
@@ -92,10 +90,10 @@ const LoginPage = () => {
         <div className="my-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+              <div className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">
+              <span className="bg-card px-2 text-muted-foreground">
                 Hoặc tiếp tục với
               </span>
             </div>
@@ -116,11 +114,11 @@ const LoginPage = () => {
           </Button>
         </div>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           Chưa có tài khoản?{" "}
           <Link
             to="/register"
-            className="font-medium text-indigo-600 hover:text-indigo-500"
+            className="font-medium text-primary hover:text-primary/90"
           >
             Đăng ký ngay
           </Link>

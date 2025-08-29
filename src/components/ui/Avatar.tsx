@@ -7,10 +7,6 @@ interface AvatarProps {
   className?: string;
 }
 
-/**
- * Lấy hai chữ cái đầu từ tên
- * Ví dụ: "Đinh Việt Hoàng" -> "ĐH"
- */
 const getInitials = (name: string): string => {
   const nameParts = name.trim().split(" ");
   if (nameParts.length === 1) {
@@ -40,11 +36,9 @@ export const Avatar: React.FC<AvatarProps> = ({
 
   return (
     <div
-      className={`w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center ${className}`}
+      className={`w-10 h-10 rounded-full bg-muted flex items-center justify-center ${className}`}
     >
-      <span className="font-semibold text-gray-600 dark:text-gray-300">
-        {initials}
-      </span>
+      <span className="font-semibold text-muted-foreground">{initials}</span>
     </div>
   );
 };

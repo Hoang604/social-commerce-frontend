@@ -1,7 +1,7 @@
 // src/components/features/inbox/MessagePane.tsx
 import { Fragment } from "react";
 import { useGetMessages } from "../../../services/inboxApi";
-import MessageComposer from "./MessageComposer"; // Import component mới
+import MessageComposer from "./MessageComposer";
 import { Button } from "../../ui/Button";
 import { cn } from "../../../lib/utils";
 
@@ -21,15 +21,15 @@ const MessagePane = ({ conversationId }: MessagePaneProps) => {
 
   if (!conversationId) {
     return (
-      <div className="flex flex-1 items-center justify-center text-neutral-500">
+      <div className="flex flex-1 items-center justify-center text-muted-foreground">
         <p>Select a conversation to start messaging.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-white border-l border-neutral-200">
-      <div className="p-4 border-b border-neutral-200">
+    <div className="flex flex-1 flex-col bg-background border-l">
+      <div className="p-4 border-b">
         <h2 className="font-semibold">Conversation {conversationId}</h2>
       </div>
       <div className="flex-1 p-4 overflow-y-auto flex flex-col-reverse">
@@ -44,7 +44,7 @@ const MessagePane = ({ conversationId }: MessagePaneProps) => {
                 <Button
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  variant="secondary"
+                  variant="default"
                 >
                   {isFetchingNextPage
                     ? "Loading more..."
@@ -60,14 +60,14 @@ const MessagePane = ({ conversationId }: MessagePaneProps) => {
                     className={cn(
                       "p-2 my-1 rounded-lg max-w-xs",
                       message.fromCustomer
-                        ? "bg-gray-200 self-start"
-                        : "bg-blue-500 text-white self-end",
+                        ? "bg-muted self-start"
+                        : "bg-primary text-primary-foreground self-end",
                       message.status === "sending" && "opacity-60",
-                      message.status === "failed" && "bg-red-500"
+                      message.status === "failed" &&
+                        "bg-destructive text-destructive-foreground"
                     )}
                   >
                     <p>{message.content}</p>
-                    {/* Thêm logic hiển thị trạng thái (tick, icon lỗi) ở đây */}
                   </div>
                 ))}
               </Fragment>

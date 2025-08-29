@@ -11,18 +11,16 @@ export const PinInput: React.FC<PinInputProps> = ({ length, onComplete }) => {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleChange = (element: HTMLInputElement, index: number) => {
-    if (isNaN(Number(element.value))) return; // Chỉ cho phép nhập số
+    if (isNaN(Number(element.value))) return;
 
     const newPin = [...pin];
     newPin[index] = element.value;
     setPin(newPin);
 
-    // Tự động focus ô tiếp theo
     if (element.value !== "" && index < length - 1) {
       inputRefs.current[index + 1]?.focus();
     }
 
-    // Nếu đã điền đủ, gọi onComplete
     const finalPin = newPin.join("");
     if (finalPin.length === length) {
       onComplete(finalPin);
@@ -33,7 +31,6 @@ export const PinInput: React.FC<PinInputProps> = ({ length, onComplete }) => {
     e: React.KeyboardEvent<HTMLInputElement>,
     index: number
   ) => {
-    // Xử lý phím Backspace
     if (e.key === "Backspace" && pin[index] === "" && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
@@ -42,7 +39,7 @@ export const PinInput: React.FC<PinInputProps> = ({ length, onComplete }) => {
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pasteData = e.clipboardData.getData("text").slice(0, length);
-    if (!/^\d+$/.test(pasteData)) return; // Chỉ cho phép dán số
+    if (!/^\d+$/.test(pasteData)) return;
 
     const newPin = [...pin];
     for (let i = 0; i < pasteData.length; i++) {
@@ -75,7 +72,7 @@ export const PinInput: React.FC<PinInputProps> = ({ length, onComplete }) => {
           onChange={(e) => handleChange(e.target, index)}
           onKeyDown={(e) => handleKeyDown(e, index)}
           onFocus={(e) => e.target.select()}
-          className="w-12 h-12 text-center text-2xl font-semibold border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="w-12 h-12 text-center text-2xl font-semibold border border-input rounded-md focus:ring-2 focus:ring-ring focus:outline-none bg-background"
         />
       ))}
     </div>

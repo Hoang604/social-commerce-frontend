@@ -31,8 +31,8 @@ const PageSelector = ({ selectedPageId, onPageChange }: PageSelectorProps) => {
               className={cn(
                 "w-full text-left p-2 rounded-md",
                 page.id === selectedPageId
-                  ? "bg-primary-100 text-primary-600 font-semibold"
-                  : "hover:bg-neutral-100"
+                  ? "bg-accent text-accent-foreground font-semibold"
+                  : "hover:bg-accent"
               )}
             >
               {page.pageName}

@@ -4,9 +4,9 @@ import { useForm } from "react-hook-form";
 import {
   useUserProfileQuery,
   useUpdateProfileMutation,
-} from "../../services/settingsApi"; // SỬA LỖI: Đường dẫn tương đối
-import { Button } from "../../components/ui/Button"; // SỬA LỖI: Đường dẫn tương đối
-import { Input } from "../../components/ui/Input"; // SỬA LỖI: Đường dẫn tương đối
+} from "../../services/settingsApi";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
 
 interface ProfileFormData {
   fullName: string;
@@ -41,7 +41,7 @@ export function ProfilePage() {
         <div>
           <label
             htmlFor="fullName"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-foreground"
           >
             Full Name
           </label>
@@ -50,7 +50,7 @@ export function ProfilePage() {
         <div>
           <label
             htmlFor="avatarUrl"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-foreground"
           >
             Avatar URL
           </label>

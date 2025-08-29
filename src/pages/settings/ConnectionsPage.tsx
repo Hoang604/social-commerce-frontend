@@ -38,14 +38,14 @@ export function ConnectionsPage() {
               className="p-4 border rounded-md flex justify-between items-center"
             >
               <div>
-                <p className="font-semibold">{page.name}</p>
-                <p className="text-sm text-gray-500">
+                <p className="font-semibold">{page.pageName}</p>
+                <p className="text-sm text-muted-foreground">
                   Connected on: {new Date(page.createdAt).toLocaleDateString()}
                 </p>
               </div>
               <Button
                 variant="destructive"
-                onClick={() => handleDisconnect(page.id, page.name)}
+                onClick={() => handleDisconnect(page.id, page.pageName)}
                 disabled={
                   disconnectPage.isPending &&
                   disconnectPage.variables === page.id
@@ -60,7 +60,7 @@ export function ConnectionsPage() {
           ))
         ) : (
           <div className="text-center py-8 px-4 border-2 border-dashed rounded-lg">
-            <p className="text-gray-500">Bạn chưa kết nối trang nào.</p>
+            <p className="text-muted-foreground">Bạn chưa kết nối trang nào.</p>
           </div>
         )}
       </div>

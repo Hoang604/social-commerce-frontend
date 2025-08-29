@@ -5,42 +5,44 @@ export default {
   theme: {
     extend: {
       colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#3B82F6",
-          foreground: "#FFFFFF",
-          100: "#DBEAFE",
-          500: "#3B82F6",
-          600: "#2563EB",
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "#6B7280",
-          foreground: "#FFFFFF",
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         destructive: {
-          DEFAULT: "#EF4444",
-          foreground: "#FFFFFF",
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
         },
-        background: "#FFFFFF",
-        foreground: "#111827",
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
         accent: {
-          DEFAULT: "#F3F4F6",
-          foreground: "#111827",
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
         },
-        input: "#E5E7EB",
-        ring: "#3B82F6",
-        neutral: {
-          900: "#111827",
-          600: "#4B5563",
-          400: "#9CA3AF",
-          200: "#E5E7EB",
-          100: "#F3F4F6",
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
         },
-        feedback: {
-          success: "#10B981",
-          warning: "#F59E0B",
-          error: "#EF4444",
-          info: "#0EA5E9",
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
         },
+      },
+      borderRadius: {
+        lg: `var(--radius)`,
+        md: `calc(var(--radius) - 2px)`,
+        sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
         sans: ["Inter", "sans-serif"],

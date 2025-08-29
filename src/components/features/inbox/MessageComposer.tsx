@@ -24,7 +24,7 @@ const MessageComposer = ({ conversationId }: MessageComposerProps) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex items-center gap-2 p-4 border-t border-neutral-200"
+      className="flex items-center gap-2 p-4 border-t"
     >
       <Input
         type="text"

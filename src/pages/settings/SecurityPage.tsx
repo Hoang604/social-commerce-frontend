@@ -33,7 +33,6 @@ export const SecurityPage = () => {
   const [isDisableDialogOpen, setDisableDialogOpen] = useState(false);
   const [password, setPassword] = useState("");
 
-  // Sử dụng các hooks đã được định nghĩa trong settingsApi.ts
   const generate2FAMutation = useGenerate2faMutation();
   const turnOn2FAMutation = useTurnOn2faMutation();
   const disable2FAMutation = useDisable2faMutation();
@@ -138,7 +137,6 @@ export const SecurityPage = () => {
         )}
       </div>
 
-      {/* Dialog for setting up 2FA */}
       <Dialog open={isSetupDialogOpen} onOpenChange={setSetupDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -173,7 +171,6 @@ export const SecurityPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for showing recovery codes */}
       <Dialog
         open={isRecoveryCodesDialogOpen}
         onOpenChange={setRecoveryCodesDialogOpen}
@@ -186,7 +183,7 @@ export const SecurityPage = () => {
               access to your account if you lose your device.
             </DialogDescription>
           </DialogHeader>
-          <div className="my-4 p-4 bg-secondary rounded-md">
+          <div className="my-4 p-4 bg-muted rounded-md">
             <ul className="grid grid-cols-2 gap-2 font-mono">
               {recoveryCodes.map((code) => (
                 <li key={code}>{code}</li>
@@ -215,7 +212,6 @@ export const SecurityPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog for disabling 2FA */}
       <Dialog open={isDisableDialogOpen} onOpenChange={setDisableDialogOpen}>
         <DialogContent>
           <DialogHeader>
