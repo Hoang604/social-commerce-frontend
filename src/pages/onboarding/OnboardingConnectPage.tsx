@@ -1,14 +1,19 @@
 import { useFacebookAuthUrlQuery } from "../../services/facebookApi";
 import { Button } from "../../components/ui/Button";
-import { toast } from "../../components/ui/Toast";
+import { useToast } from "../../components/ui/use-toast";
 
 const OnboardingConnectPage = () => {
+  const { toast } = useToast();
   const { refetch, isFetching } = useFacebookAuthUrlQuery({
     onSuccess: (authUrl: string) => {
       window.location.href = authUrl;
     },
     onError: (error: any) => {
-      toast.error("Could not get Facebook connection URL. Please try again.");
+      toast({
+        title: "Lỗi",
+        description: "Không thể lấy URL kết nối Facebook. Vui lòng thử lại.",
+        variant: "destructive",
+      });
       console.error(error);
     },
   });
@@ -23,10 +28,10 @@ const OnboardingConnectPage = () => {
         <Button
           size="lg"
           className="mt-8"
-          isLoading={isFetching}
+          disabled={isFetching}
           onClick={() => refetch()}
         >
-          Connect with Facebook
+          {isFetching ? "Connecting..." : "Connect with Facebook"}
         </Button>
       </div>
     </div>

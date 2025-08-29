@@ -5,12 +5,14 @@ import { useAuthStore } from "../../stores/authStore";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import AuthLayout from "../../components/layout/AuthLayout";
-import { toast } from "../../components/ui/Toast";
+import { useToast } from "../../components/ui/use-toast";
 import { Eye, EyeOff } from "lucide-react";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const loginAction = useAuthStore((state) => state.login);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -19,9 +21,13 @@ const RegisterPage = () => {
   }, [isAuthenticated, navigate]);
 
   const { mutate: register, isPending } = useRegisterMutation({
-    onSuccess: () => {
-      toast.success("Account created successfully! Please log in.");
-      navigate("/login");
+    onSuccess: (data) => {
+      toast({
+        title: "Thành công",
+        description: "Tài khoản đã được tạo! Đang tự động đăng nhập...",
+      });
+      loginAction(data.user, data.accessToken);
+      navigate("/dashboard"); // Chuyển thẳng đến dashboard
     },
     onError: (error: any) => {
       console.error("Registration error:", error);
@@ -37,7 +43,11 @@ const RegisterPage = () => {
           "Cannot connect to server. Please check your connection.";
       }
 
-      toast.error(errorMessage);
+      toast({
+        title: "Đăng ký thất bại",
+        description: errorMessage,
+        variant: "destructive",
+      });
     },
   });
 
@@ -52,18 +62,30 @@ const RegisterPage = () => {
 
     // Basic validation
     if (!fullName.trim() || !email.trim()) {
-      toast.error("Vui lòng điền đầy đủ thông tin.");
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin.",
+        variant: "destructive",
+      });
       return;
     }
 
     if (password.length < 8) {
-      toast.error("Mật khẩu phải có ít nhất 8 ký tự.");
+      toast({
+        title: "Lỗi",
+        description: "Mật khẩu phải có ít nhất 8 ký tự.",
+        variant: "destructive",
+      });
       return;
     }
 
     // [4] Validation mới: Kiểm tra mật khẩu có khớp không
     if (password !== confirmPassword) {
-      toast.error("Mật khẩu xác nhận không khớp.");
+      toast({
+        title: "Lỗi",
+        description: "Mật khẩu xác nhận không khớp.",
+        variant: "destructive",
+      });
       return;
     }
 

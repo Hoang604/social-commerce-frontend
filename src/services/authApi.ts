@@ -39,8 +39,10 @@ const loginUser = async (
   return data;
 };
 
-const registerUser = async (userData: RegisterCredentials): Promise<User> => {
-  const { data } = await api.post<User>("/auth/register", userData);
+const registerUser = async (
+  userData: RegisterCredentials
+): Promise<AuthResponse> => {
+  const { data } = await api.post<AuthResponse>("/auth/register", userData);
   return data;
 };
 
@@ -74,7 +76,7 @@ export const useLoginMutation = (
 
 export const useRegisterMutation = (
   options?: Omit<
-    UseMutationOptions<User, Error, RegisterCredentials>,
+    UseMutationOptions<AuthResponse, Error, RegisterCredentials>,
     "mutationFn"
   >
 ) => {

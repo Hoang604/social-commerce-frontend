@@ -6,13 +6,14 @@ import { useAuthStore } from "../../stores/authStore";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import AuthLayout from "../../components/layout/AuthLayout";
-import { toast } from "../../components/ui/Toast";
 import { Eye, EyeOff } from "lucide-react";
+import { useToast } from "../../components/ui/use-toast";
 
 const LoginPage = () => {
   const [isFacebookLoading, setIsFacebookLoading] = useState(false);
   const navigate = useNavigate();
   const loginAction = useAuthStore((state) => state.login);
+  const { toast } = useToast();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,9 +32,13 @@ const LoginPage = () => {
         sessionStorage.setItem("emailFor2fa", email);
         navigate("/verify-2fa");
       } else {
-        toast.error(
-          error.response?.data?.message || "Email hoặc mật khẩu không hợp lệ."
-        );
+        toast({
+          title: "Lỗi",
+          description:
+            error.response?.data?.message ||
+            "Email hoặc mật khẩu không hợp lệ.",
+          variant: "destructive",
+        });
       }
     },
   });
