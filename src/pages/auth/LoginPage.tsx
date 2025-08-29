@@ -7,6 +7,7 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import AuthLayout from "../../components/layout/AuthLayout";
 import { toast } from "../../components/ui/Toast";
+import { Eye, EyeOff } from "lucide-react";
 
 const LoginPage = () => {
   const [isFacebookLoading, setIsFacebookLoading] = useState(false);
@@ -15,6 +16,7 @@ const LoginPage = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // [3] State để ẩn/hiện mật khẩu
 
   const { mutate: login, isPending } = useLoginMutation({
     onSuccess: (data) => {
@@ -64,16 +66,26 @@ const LoginPage = () => {
               onChange={(e) => setEmail(e.target.value)}
               disabled={isPending || isFacebookLoading}
             />
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              placeholder="Mật khẩu"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isPending || isFacebookLoading}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                placeholder="Mật khẩu"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isPending || isFacebookLoading}
+              />
+              {/* [7] Nút ẩn/hiện mật khẩu */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
           <div>

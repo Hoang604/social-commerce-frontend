@@ -6,6 +6,7 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import AuthLayout from "../../components/layout/AuthLayout";
 import { toast } from "../../components/ui/Toast";
+import { Eye, EyeOff } from "lucide-react";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -43,42 +44,40 @@ const RegisterPage = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState(""); // [2] State cho việc xác nhận mật khẩu
+  const [showPassword, setShowPassword] = useState(false); // [3] State để ẩn/hiện mật khẩu
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Basic validation
-    if (!fullName.trim()) {
-      toast.error("Full name is required.");
-      return;
-    }
-
-    if (!email.trim()) {
-      toast.error("Email is required.");
+    if (!fullName.trim() || !email.trim()) {
+      toast.error("Vui lòng điền đầy đủ thông tin.");
       return;
     }
 
     if (password.length < 8) {
-      toast.error("Password must be at least 8 characters long.");
+      toast.error("Mật khẩu phải có ít nhất 8 ký tự.");
       return;
     }
 
-    console.log("Attempting to register with:", {
-      fullName,
-      email,
-      password: "***",
-    });
+    // [4] Validation mới: Kiểm tra mật khẩu có khớp không
+    if (password !== confirmPassword) {
+      toast.error("Mật khẩu xác nhận không khớp.");
+      return;
+    }
+
     register({ fullName: fullName.trim(), email: email.trim(), password });
   };
 
   return (
-    <AuthLayout title="Create a New Account">
+    <AuthLayout title="Đăng ký tài khoản mới">
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           type="text"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          placeholder="Full Name"
+          placeholder="Tên đầy đủ"
           required
           disabled={isPending}
         />
@@ -86,34 +85,56 @@ const RegisterPage = () => {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email address"
+          placeholder="Địa chỉ email"
           required
           disabled={isPending}
         />
-        <Input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password (min. 8 characters)"
-          required
-          disabled={isPending}
-        />
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full"
-          isLoading={isPending}
-        >
-          Create Account
+
+        {/* [5] Bọc Input mật khẩu trong một div để đặt icon */}
+        <div className="relative">
+          <Input
+            type={showPassword ? "text" : "password"} // [6] Thay đổi type động
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Mật khẩu (tối thiểu 8 ký tự)"
+            required
+            disabled={isPending}
+            className="pr-10" // Thêm padding để icon không đè lên chữ
+          />
+          {/* [7] Nút ẩn/hiện mật khẩu */}
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400"
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+
+        {/* [8] Input mới cho việc xác nhận mật khẩu */}
+        <div className="relative">
+          <Input
+            type={showPassword ? "text" : "password"}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Nhập lại mật khẩu"
+            required
+            disabled={isPending}
+            className="pr-10"
+          />
+        </div>
+
+        <Button type="submit" size="lg" className="w-full" disabled={isPending}>
+          {isPending ? "Đang xử lý..." : "Tạo tài khoản"}
         </Button>
         <div className="text-center text-sm">
           <p>
-            Already have an account?{" "}
+            Đã có tài khoản?{" "}
             <Link
               to="/login"
-              className="font-medium text-primary-500 hover:text-primary-600"
+              className="font-medium text-primary hover:text-primary/90"
             >
-              Login
+              Đăng nhập
             </Link>
           </p>
         </div>
