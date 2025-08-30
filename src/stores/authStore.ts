@@ -30,8 +30,14 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       login: (userData, token) =>
         set({ user: userData, accessToken: token, isAuthenticated: true }),
-      logout: () => {
-        set({ user: null, accessToken: null, isAuthenticated: false });
+      logout: async () => {
+        try {
+          await api.post("/auth/logout");
+        } catch (error) {
+          console.error("Logout failed:", error);
+        } finally {
+          set({ user: null, accessToken: null, isAuthenticated: false });
+        }
       },
       setUser: (userData) => set((state) => ({ ...state, user: userData })),
       setAccessToken: (token) =>

@@ -42,6 +42,3 @@ export const useToast = () => {
 
   return { toasts, toast };
 };
-
-// This is a placeholder for the Toaster component which should render the toasts
-// It's better to have this in a separate file, e.g., Toaster.tsx

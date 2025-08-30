@@ -53,14 +53,31 @@ const registerUser = async (
  * @returns {Promise<AuthResponse>} Dữ liệu người dùng và access token đầy đủ.
  */
 export const verify2FA = async (code: string): Promise<AuthResponse> => {
-  // Backend endpoint này yêu cầu "token tạm thời" trong header
   const { data } = await api.post<AuthResponse>("/2fa/authenticate", { code });
+  return data;
+};
+
+export const exchangeCodeForToken = async (
+  code: string
+): Promise<AuthResponse> => {
+  const { data } = await api.post<AuthResponse>("/auth/exchange-code", {
+    code,
+  });
   return data;
 };
 
 // ========================================================================
 // CUSTOM HOOKS
 // ========================================================================
+
+export const useExchangeCodeForTokenMutation = (
+  options?: Omit<UseMutationOptions<AuthResponse, Error, string>, "mutationFn">
+) => {
+  return useMutation({
+    mutationFn: exchangeCodeForToken,
+    ...options,
+  });
+};
 
 export const useLoginMutation = (
   options?: Omit<

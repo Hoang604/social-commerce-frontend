@@ -27,7 +27,7 @@ const LoginPage = () => {
     onError: (error: any) => {
       if (
         error.response?.status === 401 &&
-        error.response?.data?.message === "Two factor authentication required"
+        error.response?.data?.errorCode === "2FA_REQUIRED"
       ) {
         sessionStorage.setItem("emailFor2fa", email);
         navigate("/verify-2fa");

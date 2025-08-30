@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useAuthStore } from "../../stores/authStore";
 import { Button } from "../../components/ui/Button";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   useGenerate2faMutation,
   useTurnOn2faMutation,
@@ -15,13 +14,13 @@ import {
   DialogDescription,
   DialogFooter,
 } from "../../components/ui/Dialog";
-import { Input } from "../../components/ui/Input";
 import { useToast } from "../../components/ui/use-toast";
+import { PinInput } from "../../components/ui/PinInput";
 
 export const SecurityPage = () => {
   const user = useAuthStore((state) => state.user);
+  const setUser = useAuthStore((state) => state.setUser);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const [isSetupDialogOpen, setSetupDialogOpen] = useState(false);
   const [isRecoveryCodesDialogOpen, setRecoveryCodesDialogOpen] =
@@ -31,7 +30,7 @@ export const SecurityPage = () => {
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [confirmSavedCodes, setConfirmSavedCodes] = useState(false);
   const [isDisableDialogOpen, setDisableDialogOpen] = useState(false);
-  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
 
   const generate2FAMutation = useGenerate2faMutation();
   const turnOn2FAMutation = useTurnOn2faMutation();
@@ -62,7 +61,9 @@ export const SecurityPage = () => {
           setRecoveryCodes(data.recoveryCodes);
           setSetupDialogOpen(false);
           setRecoveryCodesDialogOpen(true);
-          queryClient.invalidateQueries({ queryKey: ["me"] });
+          if (user) {
+            setUser({ ...user, isTwoFactorAuthenticationEnabled: true });
+          }
           toast({
             title: "Success",
             description: "Two-factor authentication has been enabled.",
@@ -82,12 +83,14 @@ export const SecurityPage = () => {
 
   const handleDisable2FA = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password) {
-      disable2FAMutation.mutate(password, {
+    if (code) {
+      disable2FAMutation.mutate(code, {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["me"] });
+          if (user) {
+            setUser({ ...user, isTwoFactorAuthenticationEnabled: false });
+          }
           setDisableDialogOpen(false);
-          setPassword("");
+          setCode("");
           toast({
             title: "Success",
             description: "Two-factor authentication has been disabled.",
@@ -97,7 +100,7 @@ export const SecurityPage = () => {
           console.error("Failed to disable 2FA:", error);
           toast({
             title: "Error",
-            description: "Incorrect password or an error occurred.",
+            description: "Incorrect code or an error occurred.",
             variant: "destructive",
           });
         },
@@ -154,11 +157,11 @@ export const SecurityPage = () => {
             )}
           </div>
           <form onSubmit={handleVerify2FA}>
-            <Input
-              placeholder="6-digit code"
-              value={twoFactorCode}
-              onChange={(e) => setTwoFactorCode(e.target.value)}
-              maxLength={6}
+            <PinInput
+              length={6}
+              onComplete={(value) => {
+                setTwoFactorCode(value);
+              }}
             />
             <DialogFooter className="mt-4">
               <Button type="submit" disabled={turnOn2FAMutation.isPending}>
@@ -217,15 +220,16 @@ export const SecurityPage = () => {
           <DialogHeader>
             <DialogTitle>Disable Two-Factor Authentication</DialogTitle>
             <DialogDescription>
-              To continue, please enter your password.
+              To continue, please enter the 6-digit code from your authenticator
+              app.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleDisable2FA}>
-            <Input
-              type="password"
-              placeholder="Your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+            <PinInput
+              length={6}
+              onComplete={(value) => {
+                setCode(value);
+              }}
             />
             <DialogFooter className="mt-4">
               <Button

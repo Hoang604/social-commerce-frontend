@@ -1,5 +1,5 @@
 // src/components/ui/PinInput.tsx
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 
 interface PinInputProps {
   length: number;
@@ -9,6 +9,11 @@ interface PinInputProps {
 export const PinInput: React.FC<PinInputProps> = ({ length, onComplete }) => {
   const [pin, setPin] = useState<string[]>(new Array(length).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Focus vào ô đầu tiên khi component mount
+  useEffect(() => {
+    inputRefs.current[0]?.focus();
+  }, []);
 
   const handleChange = (element: HTMLInputElement, index: number) => {
     if (isNaN(Number(element.value))) return;

@@ -5,7 +5,7 @@ import { useAuthStore } from "../stores/authStore";
 const api = axios.create({
   baseURL:
     import.meta.env.VITE_API_BASE_URL ||
-    "https://chatty-buttons-try.loca.lt/api/v1",
+    "https://api.dinhviethoang604.id.vn/api/v1",
   withCredentials: true,
 });
 
@@ -71,7 +71,8 @@ api.interceptors.response.use(
 
     const isAuthEndpoint =
       originalRequest.url.includes("/auth/login") ||
-      originalRequest.url.includes("/auth/register");
+      originalRequest.url.includes("/auth/register") ||
+      originalRequest.url.includes("/2fa/authenticate");
 
     // Logic xử lý refresh token đã có
     if (

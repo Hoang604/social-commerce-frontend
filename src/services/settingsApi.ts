@@ -66,9 +66,9 @@ export const turnOn2FA = async (code: string): Promise<TurnOn2FAResponse> => {
 };
 
 export const disable2FA = async (
-  password: string
+  code: string
 ): Promise<{ message: string }> => {
-  const response = await api.post("/2fa/turn-off", { password });
+  const response = await api.post("/2fa/turn-off", { code });
   return response.data;
 };
 
@@ -121,7 +121,7 @@ export const useTurnOn2faMutation = () => {
 export const useDisable2faMutation = () => {
   const queryClient = useQueryClient();
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (password: string) => disable2FA(password),
+    mutationFn: (code: string) => disable2FA(code),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.profile });
     },
