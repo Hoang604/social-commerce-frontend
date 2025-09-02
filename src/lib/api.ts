@@ -2,10 +2,12 @@
 import axios from "axios";
 import { useAuthStore } from "../stores/authStore";
 
+const apiBaseURL = import.meta.env.VITE_API_BASE_URL;
+if (!apiBaseURL) {
+  throw new Error("VITE_API_BASE_URL is not defined in environment variables");
+}
 const api = axios.create({
-  baseURL:
-    import.meta.env.VITE_API_BASE_URL ||
-    "https://api.dinhviethoang604.id.vn/api/v1",
+  baseURL: apiBaseURL,
   withCredentials: true,
 });
 
@@ -72,11 +74,14 @@ api.interceptors.response.use(
     const isAuthEndpoint =
       originalRequest.url.includes("/auth/login") ||
       originalRequest.url.includes("/auth/register") ||
-      originalRequest.url.includes("/2fa/authenticate");
+      originalRequest.url.includes("/2fa/authenticate") ||
+      originalRequest.url.includes("/exchange-code") ||
+      originalRequest.url.includes("/auth/refresh");
 
     // Logic xử lý refresh token đã có
     if (
       error.response.status === 401 &&
+      error.response.data.errorCode === "TOKEN_INVALID" &&
       !originalRequest._retry &&
       !isAuthEndpoint
     ) {
@@ -95,9 +100,12 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         console.error("Failed to refresh token. Logging out.", refreshError);
-        useAuthStore.getState().logout();
-        window.location.href = "/login";
-        return Promise.reject(refreshError);
+        useAuthStore
+          .getState()
+          .setState({ isAuthenticated: false, accessToken: null, user: null });
+
+        window.dispatchEvent(new Event("logout"));
+        return new Promise(() => {});
       }
     }
 

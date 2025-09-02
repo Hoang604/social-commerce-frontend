@@ -30,7 +30,7 @@ const DropdownMenuContent = ({
   >
     <Menu.Items
       className={cn(
-        "absolute right-0 mt-2 w-32 origin-top-right rounded-md bg-popover text-popover-foreground shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border",
+        "absolute right-0 z-10 mt-2 w-32 origin-top-right rounded-md bg-popover text-popover-foreground shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border",
         className
       )}
     >

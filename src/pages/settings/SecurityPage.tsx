@@ -1,11 +1,9 @@
+// src/pages/settings/SecurityPage.tsx
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { useAuthStore } from "../../stores/authStore";
 import { Button } from "../../components/ui/Button";
-import {
-  useGenerate2faMutation,
-  useTurnOn2faMutation,
-  useDisable2faMutation,
-} from "../../services/settingsApi";
+import { Input } from "../../components/ui/Input";
 import {
   Dialog,
   DialogContent,
@@ -16,8 +14,19 @@ import {
 } from "../../components/ui/Dialog";
 import { useToast } from "../../components/ui/use-toast";
 import { PinInput } from "../../components/ui/PinInput";
+import {
+  useGenerate2faMutation,
+  useTurnOn2faMutation,
+  useDisable2faMutation,
+  useChangePasswordMutation,
+  useRequestEmailChangeMutation,
+} from "../../services/settingsApi";
 
-export const SecurityPage = () => {
+// ========================================================================
+// SECTION 1: TWO-FACTOR AUTHENTICATION
+// Logic và JSX cho 2FA được đưa vào đây, giữ nguyên 100%
+// ========================================================================
+const TwoFactorAuthSection = () => {
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const { toast } = useToast();
@@ -45,8 +54,8 @@ export const SecurityPage = () => {
       onError: (error) => {
         console.error("Failed to generate 2FA secret:", error);
         toast({
-          title: "Error",
-          description: "Could not generate QR code. Please try again.",
+          title: "Lỗi",
+          description: "Không thể tạo mã QR. Vui lòng thử lại.",
           variant: "destructive",
         });
       },
@@ -65,15 +74,15 @@ export const SecurityPage = () => {
             setUser({ ...user, isTwoFactorAuthenticationEnabled: true });
           }
           toast({
-            title: "Success",
-            description: "Two-factor authentication has been enabled.",
+            title: "Thành công",
+            description: "Xác thực hai yếu tố đã được bật.",
           });
         },
         onError: (error) => {
           console.error("Failed to turn on 2FA:", error);
           toast({
-            title: "Error",
-            description: "The code is incorrect. Please try again.",
+            title: "Lỗi",
+            description: "Mã không chính xác. Vui lòng thử lại.",
             variant: "destructive",
           });
         },
@@ -92,15 +101,15 @@ export const SecurityPage = () => {
           setDisableDialogOpen(false);
           setCode("");
           toast({
-            title: "Success",
-            description: "Two-factor authentication has been disabled.",
+            title: "Thành công",
+            description: "Xác thực hai yếu tố đã được tắt.",
           });
         },
         onError: (error) => {
           console.error("Failed to disable 2FA:", error);
           toast({
-            title: "Error",
-            description: "Incorrect code or an error occurred.",
+            title: "Lỗi",
+            description: "Mã không chính xác hoặc đã xảy ra lỗi.",
             variant: "destructive",
           });
         },
@@ -111,30 +120,31 @@ export const SecurityPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium">Two-Factor Authentication</h3>
+        <h3 className="text-lg font-medium">Xác thực hai yếu tố</h3>
         <p className="text-sm text-muted-foreground">
-          Add an extra layer of security to your account.
+          Thêm một lớp bảo mật bổ sung cho tài khoản của bạn.
         </p>
       </div>
       <div className="p-4 border rounded-lg max-w-md">
         {user?.isTwoFactorAuthenticationEnabled ? (
           <div className="flex items-center justify-between">
-            <p>2FA is enabled</p>
+            <p>Xác thực hai yếu tố đã được bật</p>
             <Button
               variant="destructive"
               onClick={() => setDisableDialogOpen(true)}
             >
-              Disable 2FA
+              Tắt 2FA
             </Button>
           </div>
         ) : (
           <div className="flex items-center justify-between">
-            <p>2FA is disabled</p>
+            <p>Xác thực hai yếu tố chưa được kích hoạt</p>
             <Button
+              variant="success"
               onClick={handleGenerate2FA}
               disabled={generate2FAMutation.isPending}
             >
-              {generate2FAMutation.isPending ? "Generating..." : "Enable 2FA"}
+              {generate2FAMutation.isPending ? "Đang tạo..." : "Bật 2FA"}
             </Button>
           </div>
         )}
@@ -143,17 +153,17 @@ export const SecurityPage = () => {
       <Dialog open={isSetupDialogOpen} onOpenChange={setSetupDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Set up Two-Factor Authentication</DialogTitle>
+            <DialogTitle>Cài đặt Xác thực hai yếu tố</DialogTitle>
             <DialogDescription>
-              Scan the QR code with your authenticator app, then enter the code
-              below.
+              Quét mã QR bằng ứng dụng xác thực của bạn, sau đó nhập mã vào bên
+              dưới.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-center my-4">
             {qrCode ? (
               <img src={qrCode} alt="2FA QR Code" />
             ) : (
-              <p>Loading QR code...</p>
+              <p>Đang tải mã QR...</p>
             )}
           </div>
           <form onSubmit={handleVerify2FA}>
@@ -166,8 +176,8 @@ export const SecurityPage = () => {
             <DialogFooter className="mt-4">
               <Button type="submit" disabled={turnOn2FAMutation.isPending}>
                 {turnOn2FAMutation.isPending
-                  ? "Verifying..."
-                  : "Verify & Enable"}
+                  ? "Đang xác minh..."
+                  : "Xác minh & Bật"}
               </Button>
             </DialogFooter>
           </form>
@@ -180,10 +190,11 @@ export const SecurityPage = () => {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Save Your Recovery Codes</DialogTitle>
+            <DialogTitle>Lưu mã khôi phục của bạn</DialogTitle>
             <DialogDescription>
-              Store these codes in a safe place. They can be used to regain
-              access to your account if you lose your device.
+              Lưu trữ các mã này ở một nơi an toàn. Chúng có thể được sử dụng để
+              giành lại quyền truy cập vào tài khoản của bạn nếu bạn mất thiết
+              bị.
             </DialogDescription>
           </DialogHeader>
           <div className="my-4 p-4 bg-muted rounded-md">
@@ -201,7 +212,7 @@ export const SecurityPage = () => {
               onChange={(e) => setConfirmSavedCodes(e.target.checked)}
             />
             <label htmlFor="confirm-saved" className="text-sm">
-              I have saved these recovery codes.
+              Tôi đã lưu các mã khôi phục này.
             </label>
           </div>
           <DialogFooter className="mt-4">
@@ -209,7 +220,7 @@ export const SecurityPage = () => {
               onClick={() => setRecoveryCodesDialogOpen(false)}
               disabled={!confirmSavedCodes}
             >
-              Close
+              Đóng
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -218,10 +229,10 @@ export const SecurityPage = () => {
       <Dialog open={isDisableDialogOpen} onOpenChange={setDisableDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Disable Two-Factor Authentication</DialogTitle>
+            <DialogTitle>Tắt xác thực hai yếu tố</DialogTitle>
             <DialogDescription>
-              To continue, please enter the 6-digit code from your authenticator
-              app.
+              Để tiếp tục, vui lòng nhập mã 6 chữ số từ ứng dụng xác thực của
+              bạn.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleDisable2FA}>
@@ -237,12 +248,257 @@ export const SecurityPage = () => {
                 variant="destructive"
                 disabled={disable2FAMutation.isPending}
               >
-                {disable2FAMutation.isPending ? "Disabling..." : "Disable"}
+                {disable2FAMutation.isPending ? "Đang tắt..." : "Tắt"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+};
+
+// ========================================================================
+// SECTION 2: CHANGE PASSWORD
+// Component mới cho việc thay đổi mật khẩu
+// ========================================================================
+const ChangePasswordForm = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    watch,
+  } = useForm();
+  const { toast } = useToast();
+  const setAccessToken = useAuthStore((state) => state.setAccessToken);
+  const changePasswordMutation = useChangePasswordMutation();
+
+  const onSubmit = (data: any) => {
+    changePasswordMutation.mutate(
+      { currentPassword: data.currentPassword, newPassword: data.newPassword },
+      {
+        onSuccess: (data) => {
+          if (data.accessToken) {
+            setAccessToken(data.accessToken);
+          }
+          toast({
+            title: "Thành công",
+            description:
+              "Đổi mật khẩu thành công, tự động đăng xuất khỏi tất cả thiết bị.",
+          });
+          reset();
+        },
+        onError: (error: any) => {
+          toast({
+            title: "Lỗi",
+            description:
+              error.response?.data?.message || "Không thể thay đổi mật khẩu.",
+            variant: "destructive",
+          });
+        },
+      }
+    );
+  };
+
+  return (
+    <div className="pt-6">
+      <h3 className="text-lg font-medium">Thay đổi mật khẩu</h3>
+      <p className="text-sm text-muted-foreground">
+        Chọn một mật khẩu mạnh mà bạn không sử dụng ở bất kỳ nơi nào khác.
+      </p>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-4 max-w-md mt-4 p-4 border rounded-lg"
+      >
+        <div>
+          <label
+            className="block text-sm font-medium text-foreground"
+            htmlFor="currentPassword"
+          >
+            Mật khẩu hiện tại
+          </label>
+          <Input
+            id="currentPassword"
+            type="password"
+            {...register("currentPassword", {
+              required: "Mật khẩu hiện tại là bắt buộc.",
+            })}
+          />
+          {errors.currentPassword && (
+            <p className="text-xs text-destructive mt-1">
+              {errors.currentPassword.message as string}
+            </p>
+          )}
+        </div>
+        <div>
+          <label
+            className="block text-sm font-medium text-foreground"
+            htmlFor="newPassword"
+          >
+            Mật khẩu mới
+          </label>
+          <Input
+            id="newPassword"
+            type="password"
+            {...register("newPassword", {
+              required: "Mật khẩu mới là bắt buộc.",
+              minLength: {
+                value: 8,
+                message: "Mật khẩu phải có ít nhất 8 ký tự.",
+              },
+            })}
+          />
+          {errors.newPassword && (
+            <p className="text-xs text-destructive mt-1">
+              {errors.newPassword.message as string}
+            </p>
+          )}
+        </div>
+        <div>
+          <label
+            className="block text-sm font-medium text-foreground"
+            htmlFor="confirmPassword"
+          >
+            Xác nhận mật khẩu mới
+          </label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            {...register("confirmPassword", {
+              required: "Vui lòng xác nhận mật khẩu mới của bạn.",
+              validate: (value) =>
+                value === watch("newPassword") || "Mật khẩu không khớp.",
+            })}
+          />
+          {errors.confirmPassword && (
+            <p className="text-xs text-destructive mt-1">
+              {errors.confirmPassword.message as string}
+            </p>
+          )}
+        </div>
+        <Button type="submit" disabled={changePasswordMutation.isPending}>
+          {changePasswordMutation.isPending
+            ? "Đang cập nhật..."
+            : "Cập nhật mật khẩu"}
+        </Button>
+      </form>
+    </div>
+  );
+};
+
+// ========================================================================
+// SECTION 3: CHANGE EMAIL
+// Component mới cho việc thay đổi email
+// ========================================================================
+const ChangeEmailForm = () => {
+  const user = useAuthStore((state) => state.user);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm();
+  const { toast } = useToast();
+  const requestEmailChangeMutation = useRequestEmailChangeMutation();
+
+  const onSubmit = (data: any) => {
+    requestEmailChangeMutation.mutate(
+      { newEmail: data.newEmail, password: data.password },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Kiểm tra hộp thư đến của bạn",
+            description: `Một liên kết xác nhận đã được gửi đến ${data.newEmail}.`,
+          });
+          reset();
+        },
+        onError: (error: any) => {
+          toast({
+            title: "Lỗi",
+            description:
+              error.response?.data?.message ||
+              "Yêu cầu thay đổi email thất bại.",
+            variant: "destructive",
+          });
+        },
+      }
+    );
+  };
+
+  return (
+    <div className="pt-6">
+      <h3 className="text-lg font-medium">Thay đổi địa chỉ Email</h3>
+      <p className="text-sm text-muted-foreground">
+        Địa chỉ email hiện tại của bạn là <strong>{user?.email}</strong>.
+      </p>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-4 max-w-md mt-4 p-4 border rounded-lg"
+      >
+        <div>
+          <label
+            className="block text-sm font-medium text-foreground"
+            htmlFor="newEmail"
+          >
+            Địa chỉ Email mới
+          </label>
+          <Input
+            id="newEmail"
+            type="email"
+            {...register("newEmail", { required: "Email mới là bắt buộc." })}
+          />
+          {errors.newEmail && (
+            <p className="text-xs text-destructive mt-1">
+              {errors.newEmail.message as string}
+            </p>
+          )}
+        </div>
+        <div>
+          <label
+            className="block text-sm font-medium text-foreground"
+            htmlFor="password"
+          >
+            Xác minh bằng mật khẩu hiện tại
+          </label>
+          <Input
+            id="password"
+            type="password"
+            {...register("password", {
+              required: "Cần có mật khẩu để xác minh.",
+            })}
+          />
+          {errors.password && (
+            <p className="text-xs text-destructive mt-1">
+              {errors.password.message as string}
+            </p>
+          )}
+        </div>
+        <Button type="submit" disabled={requestEmailChangeMutation.isPending}>
+          {requestEmailChangeMutation.isPending
+            ? "Đang gửi..."
+            : "Yêu cầu thay đổi Email"}
+        </Button>
+      </form>
+    </div>
+  );
+};
+
+// ========================================================================
+// MAIN COMPONENT: Orchestrates all sections
+// ========================================================================
+export const SecurityPage = () => {
+  return (
+    <div className="space-y-6">
+      <TwoFactorAuthSection />
+
+      <hr className="my-6" />
+
+      <ChangePasswordForm />
+
+      <hr className="my-6" />
+
+      <ChangeEmailForm />
     </div>
   );
 };

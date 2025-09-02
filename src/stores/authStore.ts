@@ -3,12 +3,19 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import api from "../lib/api";
 import { AxiosError } from "axios";
+import { redirect } from "react-router-dom";
 
 interface User {
   id: string;
   email: string;
   fullName: string;
   isTwoFactorAuthenticationEnabled?: boolean;
+  avatarUrl: string;
+  language: string;
+  timezone: string;
+  status: string;
+  lastLoginAt: string;
+  createdAt: string;
 }
 
 interface AuthState {
@@ -18,8 +25,9 @@ interface AuthState {
   login: (userData: User, token: string) => void;
   logout: () => void;
   setUser: (userData: User) => void;
+  setState: (state: Partial<AuthState>) => void;
   setAccessToken: (token: string | null) => void;
-  verifySessionAndFetchUser: () => Promise<void>; // <-- ACTION MỚI
+  verifySessionAndFetchUser: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -30,6 +38,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       login: (userData, token) =>
         set({ user: userData, accessToken: token, isAuthenticated: true }),
+
       logout: async () => {
         try {
           await api.post("/auth/logout");
@@ -37,32 +46,27 @@ export const useAuthStore = create<AuthState>()(
           console.error("Logout failed:", error);
         } finally {
           set({ user: null, accessToken: null, isAuthenticated: false });
+          redirect("/login");
         }
       },
+      setState: (state) => set((s) => ({ ...s, ...state })),
       setUser: (userData) => set((state) => ({ ...state, user: userData })),
       setAccessToken: (token) =>
         set({ accessToken: token, isAuthenticated: !!token }),
 
       verifySessionAndFetchUser: async () => {
         try {
-          // 1. Request này sẽ thành công (sau khi được interceptor xử lý)
-          // và `data` lúc này chính là đối tượng `user`.
           const { data: user } = await api.get<User>("/user/me");
 
-          // 2. Kiểm tra xem có nhận được đối tượng user hợp lệ không.
           if (user && user.id) {
-            // 3. accessToken mới đã được lưu vào store bởi interceptor.
-            //    Chúng ta chỉ cần lấy nó ra từ state hiện tại.
             const accessToken = get().accessToken;
 
             if (accessToken) {
-              // 4. Gọi action `login` để cập nhật đầy đủ state với `user` và `accessToken`.
               get().login(user, accessToken);
-              return; // Hoàn thành và resolve Promise
+              return;
             }
           }
 
-          // Nếu không có user hoặc accessToken, có lỗi logic xảy ra.
           throw new Error("Invalid session data from server");
         } catch (error) {
           const axiosError = error as AxiosError;
@@ -73,7 +77,6 @@ export const useAuthStore = create<AuthState>()(
           ) {
             return Promise.reject({ requires2FA: true });
           }
-          // Với các lỗi khác, thực hiện logout để dọn dẹp state
           get().logout();
           return Promise.reject({ requires2FA: false });
         }

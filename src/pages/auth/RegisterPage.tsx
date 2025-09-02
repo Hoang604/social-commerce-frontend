@@ -24,7 +24,7 @@ const RegisterPage = () => {
     onSuccess: (data) => {
       toast({
         title: "Thành công",
-        description: "Tài khoản đã được tạo! Đang tự động đăng nhập...",
+        description: "Tạo tài khoản thành công!",
       });
       loginAction(data.user, data.accessToken);
       navigate("/dashboard"); // Chuyển thẳng đến dashboard

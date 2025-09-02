@@ -10,11 +10,18 @@ export interface User {
   fullName: string;
   avatarUrl: string;
   isTwoFactorAuthenticationEnabled: boolean;
+  language: string;
+  timezone: string;
+  status: string;
+  lastLoginAt: string;
+  createdAt: string;
 }
 
 interface UpdateProfilePayload {
   fullName?: string;
   avatarUrl?: string;
+  language?: string;
+  timezone?: string;
 }
 
 // Dữ liệu backend trả về khi tạo mã QR
@@ -35,7 +42,39 @@ interface ConnectedPage {
   createdAt: string;
 }
 
+interface ChangePasswordResponse {
+  message: string;
+  accessToken: string;
+}
+
+// Thêm vào đầu file src/services/settingsApi.ts
+
+interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
+interface RequestEmailChangePayload {
+  newEmail: string;
+  password: string;
+}
+
 // === QUERY KEYS ===
+
+export const changePassword = async (
+  payload: ChangePasswordPayload
+): Promise<ChangePasswordResponse> => {
+  const response = await api.post("/auth/change-password", payload);
+  return response.data;
+};
+
+export const requestEmailChange = async (
+  payload: RequestEmailChangePayload
+): Promise<{ message: string }> => {
+  const response = await api.post("/user/request-email-change", payload);
+  return response.data;
+};
+
 const settingsKeys = {
   profile: ["me"] as const, // Đổi thành 'me' để khớp với các file khác
   connectedPages: ["connectedPages"] as const,
@@ -83,6 +122,18 @@ export const disconnectPage = async (pageId: string): Promise<void> => {
 
 // === REACT QUERY HOOKS ===
 // Các hooks này sẽ sử dụng các hàm API ở trên
+
+export const useChangePasswordMutation = () => {
+  return useMutation({
+    mutationFn: changePassword,
+  });
+};
+
+export const useRequestEmailChangeMutation = () => {
+  return useMutation({
+    mutationFn: requestEmailChange,
+  });
+};
 
 export const useUserProfileQuery = () => {
   return useQuery<User>({

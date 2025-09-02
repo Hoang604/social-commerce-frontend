@@ -10,6 +10,13 @@ interface User {
   id: string;
   email: string;
   fullName: string;
+  isTwoFactorAuthenticationEnabled?: boolean;
+  avatarUrl: string;
+  language: string;
+  timezone: string;
+  status: string;
+  lastLoginAt: string;
+  createdAt: string;
 }
 
 interface AuthResponse {
