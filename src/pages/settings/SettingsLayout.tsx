@@ -5,7 +5,7 @@ import { cn } from "../../lib/utils";
 const navItems = [
   { name: "Hồ sơ cá nhân", href: "/settings/profile" },
   { name: "Bảo mật", href: "/settings/security" },
-  { name: "Kết nối", href: "/settings/connections" },
+  { name: "Kết nối", href: "/settings/projects" },
 ];
 
 export function SettingsLayout() {

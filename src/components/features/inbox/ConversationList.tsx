@@ -1,88 +1,58 @@
-import React from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import api from "../../../lib/api";
-import { cn } from "../../../lib/utils";
+// src/components/features/inbox/ConversationList.tsx
 
-const getConversations = async ({
-  pageParam = 1,
-  queryKey,
-}: {
-  pageParam?: number;
-  queryKey: any[];
-}) => {
-  const [, pageId] = queryKey;
-  if (!pageId) return { data: [], nextPage: undefined };
+import { useParams, NavLink } from "react-router-dom";
+import { useGetConversations } from "../../../services/inboxApi";
+import { Spinner } from "../../ui/Spinner";
 
-  const { data } = await api.get(`/inbox/conversations`, {
-    params: { connectedPageId: pageId, page: pageParam, limit: 20 },
-  });
-  return {
-    data: data.data,
-    nextPage: data.total > pageParam * data.limit ? pageParam + 1 : undefined,
-  };
-};
+export const ConversationList = () => {
+  const { projectId } = useParams<{ projectId: string }>();
+  const numericProjectId = projectId ? parseInt(projectId, 10) : undefined;
 
-interface ConversationListProps {
-  pageId: string;
-  onConversationSelect: (conversationId: string | null) => void;
-  selectedConversationId: string | null;
-}
+  const { data: conversationsResponse, isLoading } =
+    useGetConversations(numericProjectId);
 
-const ConversationList = ({
-  pageId,
-  onConversationSelect,
-  selectedConversationId,
-}: ConversationListProps) => {
-  const { data, fetchNextPage, hasNextPage, isLoading, isError } =
-    useInfiniteQuery({
-      queryKey: ["conversations", pageId],
-      queryFn: getConversations,
-      getNextPageParam: (lastPage) => lastPage.nextPage,
-      initialPageParam: 1,
-    });
-
-  if (!pageId) {
+  if (isLoading) {
     return (
-      <div className="p-4 text-center text-muted-foreground">
-        Please select a page to view conversations.
+      <div className="flex items-center justify-center p-8 h-full">
+        <Spinner />
       </div>
     );
   }
 
-  if (isLoading) return <div>Loading Conversations...</div>;
-  if (isError) return <div>Error loading conversations.</div>;
+  const conversations = conversationsResponse?.data || [];
+
+  if (conversations.length === 0) {
+    return (
+      <div className="p-4 text-center text-muted-foreground h-full flex flex-col justify-center">
+        <h3 className="font-semibold text-foreground">No conversations yet</h3>
+        <p className="text-sm mt-1">
+          When your website visitors send a message, it will appear here.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      {data?.pages.map((page, i) => (
-        <React.Fragment key={i}>
-          {page.data.map((conv: any) => (
-            <div
-              key={conv.id}
-              onClick={() => onConversationSelect(conv.id.toString())}
-              className={cn(
-                "p-4 border-b cursor-pointer hover:bg-accent",
-                conv.id.toString() === selectedConversationId ? "bg-accent" : ""
-              )}
-            >
-              <p className="font-semibold">{conv.participant.name}</p>
-              <p className="text-sm text-muted-foreground truncate">
-                {conv.lastMessageSnippet}
-              </p>
-            </div>
-          ))}
-        </React.Fragment>
-      ))}
-      {hasNextPage && (
-        <button
-          onClick={() => fetchNextPage()}
-          className="w-full p-2 text-primary"
+    <nav className="flex-1">
+      {/* SỬA LỖI: Truy cập vào conversationsResponse.data để map */}
+      {conversations.map((convo) => (
+        <NavLink
+          key={convo.id}
+          to={`/inbox/projects/${projectId}/conversations/${convo.id}`}
+          className={({ isActive }) =>
+            `block p-4 border-b hover:bg-gray-50 dark:hover:bg-gray-800 ${
+              isActive ? "bg-blue-50 dark:bg-gray-900" : ""
+            }`
+          }
         >
-          Load More
-        </button>
-      )}
-    </div>
+          <p className="font-semibold text-foreground">
+            {convo.visitor.displayName}
+          </p>
+          <p className="text-sm text-muted-foreground truncate">
+            {convo.lastMessageSnippet || "No messages yet."}
+          </p>
+        </NavLink>
+      ))}
+    </nav>
   );
 };
-
-export default ConversationList;

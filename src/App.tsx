@@ -1,41 +1,39 @@
 // src/App.tsx
+
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuthStore } from "./stores/authStore";
 import type { JSX } from "react";
 
-// --- Components & Pages ---
+// --- Core Components & Pages ---
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/auth/LoginPage";
-import DashboardPage from "./pages/DashboardPage";
-import { SocketProvider } from "./contexts/SocketContext";
 import RegisterPage from "./pages/auth/RegisterPage";
 import Verify2faPage from "./pages/auth/Verify2faPage";
-
-// --- New Imports ---
+import { Toaster } from "./components/ui/Toaster";
 import { SettingsLayout } from "./pages/settings/SettingsLayout";
 import { ProfilePage } from "./pages/settings/ProfilePage";
 import { SecurityPage } from "./pages/settings/SecurityPage";
-import { ConnectionsPage } from "./pages/settings/ConnectionsPage";
-import { DashboardLayout } from "./components/layout/DashboardLayout";
-import { FacebookCallbackPage } from "./pages/FacebookCallbackPage";
-import MessagePaneRoute from "./components/features/inbox/MessagePaneRoute";
-import { SocialCallbackPage } from "./pages/auth/SocialCallbackPage";
-import { Toaster } from "./components/ui/Toaster";
+import { ProjectSettingsPage } from "./pages/settings/ProjectSettingsPage";
+import { useAuthStore } from "./stores/authStore";
+
+// --- The New Inbox Structure ---
+import { InboxLayout } from "./pages/inbox/InboxLayout";
+import { MainLayout } from "./components/layout/MainLayout";
 
 /**
- * Bọc các route công khai. Tự động chuyển hướng nếu đã đăng nhập.
+ * PublicRoute HOC for better auth flow.
+ * Automatically redirects authenticated users from public pages.
  */
 const PublicRoute = ({ children }: { children: JSX.Element }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
+  // UPDATED: Redirect to /inbox, not /dashboard
+  return isAuthenticated ? <Navigate to="/inbox" replace /> : children;
 };
 
 function App() {
   return (
-    // Sử dụng React.Fragment (<>) để bọc cả Routes và Toaster
     <>
       <Routes>
-        {/* === Public Routes === */}
+        {/* === Public Routes with Guard === */}
         <Route
           path="/login"
           element={
@@ -53,67 +51,31 @@ function App() {
           }
         />
         <Route path="/verify-2fa" element={<Verify2faPage />} />
-        <Route path="/auth/social-callback" element={<SocialCallbackPage />} />
+
         {/* === Protected Routes === */}
-        {/* Dashboard Area */}
+
         <Route
-          path="/dashboard/*"
           element={
             <ProtectedRoute>
-              <SocketProvider>
-                {/* Sử dụng DashboardLayout cho toàn bộ khu vực dashboard */}
-                <Routes>
-                  {/* Route mặc định cho /dashboard sẽ render DashboardPage */}
-                  <Route path="/" element={<DashboardLayout />}>
-                    {/* Các route con của DashboardPage */}
-                    <Route index element={<DashboardPage />} />
-                    <Route
-                      path="page/:pageId"
-                      element={
-                        <div className="flex-1 flex items-center justify-center text-neutral-600">
-                          <p>Select a conversation.</p>
-                        </div>
-                      }
-                    />
-                    <Route
-                      path="page/:pageId/conversation/:conversationId"
-                      element={<MessagePaneRoute />}
-                    />
-                  </Route>
-                </Routes>
-              </SocketProvider>
+              <MainLayout />
             </ProtectedRoute>
           }
-        />
-        {/* Settings Area */}
-        <Route
-          path="/settings/*"
-          element={
-            <ProtectedRoute>
-              <Routes>
-                <Route path="/" element={<SettingsLayout />}>
-                  <Route path="profile" element={<ProfilePage />} />
-                  <Route path="security" element={<SecurityPage />} />
-                  <Route path="connections" element={<ConnectionsPage />} />
-                  <Route index element={<Navigate to="profile" replace />} />
-                </Route>
-              </Routes>
-            </ProtectedRoute>
-          }
-        />
-        {/* Facebook Callback Route */}
-        <Route
-          path="/facebook/callback"
-          element={
-            <ProtectedRoute>
-              <FacebookCallbackPage />
-            </ProtectedRoute>
-          }
-        />
+        >
+          {/* Inbox Area is now a child of MainLayout */}
+          <Route path="/inbox/*" element={<InboxLayout />} />
+
+          {/* Settings Area is now a child of MainLayout */}
+          <Route path="/settings" element={<SettingsLayout />}>
+            <Route index element={<Navigate to="profile" replace />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="security" element={<SecurityPage />} />
+            <Route path="projects" element={<ProjectSettingsPage />} />
+          </Route>
+        </Route>
         {/* Fallback Route */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/inbox" replace />} />
       </Routes>
-      {/* Di chuyển Toaster ra ngoài Routes */}
+
       <Toaster />
     </>
   );
