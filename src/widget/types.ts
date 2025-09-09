@@ -14,8 +14,8 @@ export type Message = {
 };
 
 export type WidgetConfig = {
+  projectId: string;
   primaryColor: string;
   welcomeMessage: string;
 };
-
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
