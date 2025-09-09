@@ -31,8 +31,8 @@ const Select = ({
   const selectedOption = options.find((option) => option.value === value);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger>
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
           className={cn(
@@ -45,7 +45,10 @@ const Select = ({
           <ChevronDown className="h-4 w-4 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-full">
+      <DropdownMenuContent
+        className="w-[--radix-dropdown-menu-trigger-width]"
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
         {options.map((option) => (
           <DropdownMenuItem
             key={option.value}

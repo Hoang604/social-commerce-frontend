@@ -17,7 +17,7 @@ export function SettingsLayout() {
             to="/dashboard"
             className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent"
           >
-            &larr; Quay lại Bảng điều khiển
+            &larr; Quay lại Inbox
           </Link>
         </nav>
         <h2 className="text-lg font-semibold mb-4 px-3 text-foreground">

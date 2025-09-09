@@ -140,7 +140,7 @@ const TwoFactorAuthSection = () => {
           <div className="flex items-center justify-between">
             <p>Xác thực hai yếu tố chưa được kích hoạt</p>
             <Button
-              variant="success"
+              variant="default"
               onClick={handleGenerate2FA}
               disabled={generate2FAMutation.isPending}
             >

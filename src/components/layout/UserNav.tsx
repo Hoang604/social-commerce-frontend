@@ -27,14 +27,19 @@ export const UserNav = () => {
   if (!user) return null;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative rounded-full">
-          <Avatar name={user.fullName} className="h-9 w-9" />
+        <Button variant="ghost" size="avatar" className="relative rounded-full">
+          <Avatar name={user.fullName} className="h-11 w-11" />
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent
+        className="w-56"
+        align="end"
+        forceMount
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user.fullName}</p>

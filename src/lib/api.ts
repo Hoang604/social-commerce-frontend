@@ -1,7 +1,6 @@
 // src/lib/api.ts
 import axios from "axios";
 import { useAuthStore } from "../stores/authStore";
-import { camelCase, mapKeys, isObject, isArray } from "lodash";
 
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL;
 if (!apiBaseURL) {
@@ -11,32 +10,6 @@ const api = axios.create({
   baseURL: apiBaseURL,
   withCredentials: true,
 });
-
-const toCamelCase = (data: any): any => {
-  if (isArray(data)) {
-    return data.map((item) => toCamelCase(item));
-  }
-  if (isObject(data) && data !== null && !(data instanceof Date)) {
-    return mapKeys(data, (_value, key) => camelCase(key));
-  }
-  return data;
-};
-
-api.interceptors.response.use(
-  (response) => {
-    if (response.data) {
-      response.data = toCamelCase(response.data);
-    }
-    return response;
-  },
-  (error) => {
-    // We can also handle camelCasing for error responses if needed
-    if (error.response && error.response.data) {
-      error.response.data = toCamelCase(error.response.data);
-    }
-    return Promise.reject(error);
-  }
-);
 
 // --- Interceptor 1: Ghi log và đính kèm Access Token cho mỗi Request ---
 api.interceptors.request.use(

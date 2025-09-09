@@ -1,6 +1,5 @@
 // src/pages/inbox/InboxLayout.tsx
 
-import { useEffect } from "react";
 import { Outlet, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import * as projectApi from "../../services/projectApi";
@@ -25,29 +24,6 @@ export const InboxLayout = () => {
     queryKey: ["projects"],
     queryFn: projectApi.getProjects,
   });
-
-  useEffect(() => {
-    if (!isLoading && projects) {
-      const currentProjectId = projectId ? parseInt(projectId, 10) : undefined;
-
-      if (!currentProjectId && projects.length > 0) {
-        navigate(`/inbox/projects/${projects[0].id}`, { replace: true });
-        return;
-      }
-
-      if (
-        currentProjectId &&
-        !projects.find((p) => p.id === currentProjectId)
-      ) {
-        navigate(
-          projects.length > 0
-            ? `/inbox/projects/${projects[0].id}`
-            : "/settings/projects",
-          { replace: true }
-        );
-      }
-    }
-  }, [isLoading, projects, projectId, navigate]);
 
   if (isLoading) {
     return (
