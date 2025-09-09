@@ -1,5 +1,4 @@
 // src/widget/App.tsx
-import { h } from "preact";
 import { useChatStore } from "./store/useChatStore";
 import { useWebSocket } from "./hooks/useWebSocket";
 
