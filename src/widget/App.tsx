@@ -1,27 +1,94 @@
 // src/widget/App.tsx
 import { useChatStore } from "./store/useChatStore";
 import { useWebSocket } from "./hooks/useWebSocket";
+import { Launcher } from "./components/Launcher";
+import { ChatWindow } from "./components/ChatWindow";
+import { webSocketService } from "./services/webSocketService";
+import { type Message } from "./types";
 
 const App = () => {
-  // Select state from the store
-  const projectId = useChatStore((state) => state.widgetConfig?.projectId);
+  // --- Nhiệm vụ 1: Kết nối với State Store ---
+  const {
+    widgetConfig,
+    isWindowOpen,
+    messages,
+    unreadCount,
+    connectionStatus,
+    isAgentTyping,
+    toggleWindow,
+    addMessage,
+    resetUnreadCount,
+    updateMessageStatus,
+  } = useChatStore();
 
-  // Visitor UID is retrieved directly as it's set during initialization
+  // --- Nhiệm vụ 2: Quản lý Tác vụ Nền ---
   const visitorUid = localStorage.getItem("visitor_uid");
+  useWebSocket({
+    projectId: widgetConfig?.projectId,
+    visitorUid: visitorUid || undefined,
+  });
 
-  // Activate the WebSocket connection hook
-  // The hook itself manages the connection lifecycle and doesn't return anything
-  if (projectId && visitorUid) {
-    useWebSocket({ projectId, visitorUid });
+  // --- Nhiệm vụ 3: Định nghĩa các Hàm Xử lý Sự kiện ---
+  const handleToggleWindow = () => {
+    toggleWindow();
+    if (!isWindowOpen) {
+      resetUnreadCount();
+    }
+  };
+
+  const handleSendMessage = (content: string) => {
+    const tempId = crypto.randomUUID();
+    const newMessage: Message = {
+      id: tempId,
+      content,
+      sender: { type: "visitor" },
+      status: "sending",
+      timestamp: new Date().toISOString(),
+    };
+
+    // Optimistic UI update
+    addMessage(newMessage);
+
+    // Send to server
+    webSocketService.sendMessage("sendMessage", { content });
+
+    // Fallback in case ack is not received
+    setTimeout(() => {
+      const msg = useChatStore.getState().messages.find((m) => m.id === tempId);
+      if (msg && msg.status === "sending") {
+        updateMessageStatus(tempId, "failed");
+      }
+    }, 5000);
+  };
+
+  const handleTypingChange = (isTyping: boolean) => {
+    webSocketService.sendMessage("visitorTyping", { isTyping });
+  };
+
+  // --- Nhiệm vụ 2 (tiếp): Xử lý Trạng thái Tải ---
+  if (!widgetConfig) {
+    return null; // Don't render anything until config is loaded
   }
 
+  // --- Nhiệm vụ 4: Lắp ráp Giao diện ---
   return (
-    <div>
-      {/* The UI components (Launcher, ChatWindow) will be added here in the next steps.
-        They will react to state changes managed by the store, which is now
-        being updated by the useWebSocket hook.
-      */}
-    </div>
+    <>
+      <ChatWindow
+        isOpen={isWindowOpen}
+        onClose={handleToggleWindow}
+        config={widgetConfig}
+        messages={messages}
+        connectionStatus={connectionStatus}
+        isAgentTyping={isAgentTyping}
+        onSendMessage={handleSendMessage}
+        onTypingChange={handleTypingChange}
+      />
+      <Launcher
+        onClick={handleToggleWindow}
+        unreadCount={unreadCount}
+        primaryColor={widgetConfig.primaryColor}
+      />
+    </>
   );
 };
 
