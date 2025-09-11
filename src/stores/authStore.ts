@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import api from "../lib/api";
 import { AxiosError } from "axios";
-import { redirect } from "react-router-dom";
+import { queryClient } from "../main";
 
 interface User {
   id: string;
@@ -26,6 +26,7 @@ interface AuthState {
   logout: () => void;
   setUser: (userData: User) => void;
   setState: (state: Partial<AuthState>) => void;
+  setAuthData: (data: { accessToken: string; user: any }) => void;
   setAccessToken: (token: string | null) => void;
   verifySessionAndFetchUser: () => Promise<void>;
 }
@@ -43,13 +44,25 @@ export const useAuthStore = create<AuthState>()(
         try {
           await api.post("/auth/logout");
         } catch (error) {
-          console.error("Logout failed:", error);
+          console.error(
+            "Logout API call failed, proceeding with client-side cleanup:",
+            error
+          );
         } finally {
           set({ user: null, accessToken: null, isAuthenticated: false });
-          redirect("/login");
+          queryClient.clear();
         }
       },
       setState: (state) => set((s) => ({ ...s, ...state })),
+      setAuthData: (data) => {
+        localStorage.setItem("accessToken", data.accessToken);
+        set({
+          isAuthenticated: true,
+          user: data.user,
+          accessToken: data.accessToken,
+        });
+      },
+
       setUser: (userData) => set((state) => ({ ...state, user: userData })),
       setAccessToken: (token) =>
         set({ accessToken: token, isAuthenticated: !!token }),

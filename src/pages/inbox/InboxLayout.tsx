@@ -8,6 +8,7 @@ import { Spinner } from "../../components/ui/Spinner";
 import { SocketProvider } from "../../contexts/SocketContext";
 import { ConversationList } from "../../components/features/inbox/ConversationList";
 import { MessageSquare } from "lucide-react";
+import { useEffect } from "react";
 
 export const InboxLayout = () => {
   const navigate = useNavigate();
@@ -24,6 +25,23 @@ export const InboxLayout = () => {
     queryKey: ["projects"],
     queryFn: projectApi.getProjects,
   });
+
+  console.log(
+    `%c--- RENDER INBOX LAYOUT --- [${new Date().toLocaleTimeString()}]`,
+    "color: blue; font-weight: bold;",
+    {
+      isLoading,
+      projectId,
+      projects: projects ? `(Array with ${projects.length} items)` : projects,
+    }
+  );
+
+  useEffect(() => {
+    if (projects && projects.length > 0 && !projectId) {
+      console.log(projects);
+      navigate(`/inbox/projects/${projects[0].id}`, { replace: true });
+    }
+  }, [projects, projectId, navigate]);
 
   if (isLoading) {
     return (

@@ -10,7 +10,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useToast } from "../../components/ui/use-toast";
 
 const LoginPage = () => {
-  const [isFacebookLoading, setIsFacebookLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const navigate = useNavigate();
   const loginAction = useAuthStore((state) => state.login);
   const { toast } = useToast();
@@ -48,12 +48,10 @@ const LoginPage = () => {
     login({ email, password });
   };
 
-  const handleFacebookLogin = () => {
-    setIsFacebookLoading(true);
-    const facebookAuthUrl = `${
-      import.meta.env.VITE_API_BASE_URL
-    }/auth/facebook`;
-    window.location.href = facebookAuthUrl;
+  const handleGoogleLogin = () => {
+    setIsGoogleLoading(true);
+    const googleAuthUrl = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
+    window.location.href = googleAuthUrl;
   };
 
   return (
@@ -69,7 +67,7 @@ const LoginPage = () => {
               placeholder="Địa chỉ email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={isPending || isFacebookLoading}
+              disabled={isPending || isGoogleLoading}
             />
             <div className="relative">
               <Input
@@ -80,7 +78,7 @@ const LoginPage = () => {
                 placeholder="Mật khẩu"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                disabled={isPending || isFacebookLoading}
+                disabled={isPending || isGoogleLoading}
               />
               {/* [7] Nút ẩn/hiện mật khẩu */}
               <button
@@ -97,7 +95,7 @@ const LoginPage = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isPending || isFacebookLoading}
+              disabled={isPending || isGoogleLoading}
             >
               {isPending ? "Đang xử lý..." : "Đăng nhập"}
             </Button>
@@ -122,12 +120,10 @@ const LoginPage = () => {
             type="button"
             className="w-full"
             variant="outline"
-            onClick={handleFacebookLogin}
-            disabled={isPending || isFacebookLoading}
+            onClick={handleGoogleLogin}
+            disabled={isPending || isGoogleLoading}
           >
-            {isFacebookLoading
-              ? "Đang chuyển hướng..."
-              : "Đăng nhập bằng Facebook"}
+            {isGoogleLoading ? "Đang chuyển hướng..." : "Đăng nhập bằng Google"}
           </Button>
         </div>
 

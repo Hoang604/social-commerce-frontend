@@ -4,8 +4,10 @@ import { useState } from "react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Spinner } from "../../components/ui/Spinner";
+import { useToast } from "../../components/ui/use-toast";
 
 export const ProjectSettingsPage = () => {
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [newProjectName, setNewProjectName] = useState("");
 
@@ -19,10 +21,10 @@ export const ProjectSettingsPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       setNewProjectName("");
-      // TODO: Show success toast
+      toast({ title: "Success", description: "Project created successfully." });
     },
     onError: () => {
-      // TODO: Show error toast
+      toast({ title: "Error", description: "Failed to create project." });
     },
   });
 

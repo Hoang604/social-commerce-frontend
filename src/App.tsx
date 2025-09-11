@@ -18,8 +18,8 @@ import { useAuthStore } from "./stores/authStore";
 // --- The New Inbox Structure ---
 import { InboxLayout } from "./pages/inbox/InboxLayout";
 import { MainLayout } from "./components/layout/MainLayout";
-import { InboxRedirector } from "./pages/inbox/InboxRedirector";
 import { MessagePane } from "./components/features/inbox/MessagePane";
+import { AuthCallbackPage } from "./pages/auth/AuthCallbackPage";
 
 /**
  * PublicRoute HOC for better auth flow.
@@ -54,6 +54,8 @@ function App() {
         />
         <Route path="/verify-2fa" element={<Verify2faPage />} />
 
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
+
         {/* === Protected Routes === */}
 
         <Route
@@ -63,13 +65,10 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* Inbox Area is now a child of MainLayout */}
           <Route path="/inbox">
-            {/* Route gốc /inbox sẽ do InboxRedirector xử lý */}
-            <Route index element={<InboxRedirector />} />
-            {/* Route cho project cụ thể sẽ hiển thị InboxLayout */}
+            <Route index element={<InboxLayout />} />
+
             <Route path="projects/:projectId" element={<InboxLayout />}>
-              {/* Khi có conversationId, MessagePane sẽ được render bên trong Outlet của InboxLayout */}
               <Route
                 path="conversations/:conversationId"
                 element={<MessagePane />}

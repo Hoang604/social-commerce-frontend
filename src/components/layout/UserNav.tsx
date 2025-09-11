@@ -19,11 +19,15 @@ export const UserNav = () => {
   const logout = useAuthStore((state) => state.logout);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("An error occurred during logout:", error);
+      navigate("/login");
+    }
   };
-
   if (!user) return null;
 
   return (
