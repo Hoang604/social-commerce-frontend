@@ -1,142 +1,76 @@
 // src/contexts/SocketContext.tsx
-import { createContext, useContext, useEffect, useState } from "react";
-import type { ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuthStore } from "../stores/authStore";
 import { useQueryClient } from "@tanstack/react-query";
+import type { Message } from "../services/inboxApi"; // Import types từ inboxApi
 
-// --- Type Definitions for Payloads ---
-// (These should ideally be in a shared types folder, e.g., src/types/socket.ts)
-type MessageStatus = "sending" | "sent" | "delivered" | "read" | "failed";
-type CommentStatus = "sending" | "sent" | "failed" | "received";
-
-interface Message {
-  id: number | string; // Can be a temporary UUID string or a final number ID
-  conversationId: string;
-  content: string | null;
-  attachments: any[] | null;
-  senderId: string;
-  fromCustomer: boolean;
-  status: MessageStatus;
-  createdAt: string; // ISO Date String
-  updatedAt: string; // ISO Date String
-}
-
-interface Comment {
-  id: number | string; // Can be a temporary UUID string or a final number ID
-  facebookPostId: string;
-  facebookCommentId: string | null;
-  parentCommentId: number | null;
-  content: string | null;
-  senderId: string;
-  fromCustomer: boolean;
-  status: CommentStatus;
-  createdAt: string; // ISO Date String
-}
-
-interface MessageStatusUpdate {
-  id: number | string;
-  conversationId: string;
-  status: MessageStatus;
-}
-
-interface CommentStatusUpdate {
-  id: number | string;
-  facebookPostId: string;
-  status: "sent" | "failed";
-  facebookCommentId?: string; // Sent from backend on successful reply
-}
-
-// --- The Cache Updater Hook ---
+// --- Hook cập nhật cache Real-time ---
 const useRealtimeCacheUpdater = (socket: Socket | null) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!socket) return;
 
+    // Hàm xử lý chung cho tin nhắn mới (từ visitor hoặc agent khác)
     const handleNewMessage = (newMessage: Message) => {
-      queryClient.setQueryData(
-        ["messages", newMessage.conversationId],
-        (oldData: any) => {
-          if (!oldData)
-            return { pages: [[newMessage]], pageParams: [undefined] };
+      const conversationId = newMessage.conversationId;
 
-          // Idempotency check
-          const messageExists = oldData.pages
-            .flat()
-            .some((msg: Message) => msg.id === newMessage.id);
-          if (messageExists) return oldData;
+      // 1. Cập nhật cache của danh sách tin nhắn
+      queryClient.setQueryData<Message[]>(
+        ["messages", conversationId],
+        (oldData) => {
+          if (!oldData) return [newMessage];
 
-          const newData = { ...oldData };
-          newData.pages[0] = [newMessage, ...newData.pages[0]];
-          return newData;
+          // Chống trùng lặp: Nếu tin nhắn đã tồn tại trong cache thì không làm gì cả
+          if (oldData.some((msg) => msg.id === newMessage.id)) {
+            return oldData;
+          }
+
+          return [...oldData, newMessage];
         }
+      );
+
+      // 2. Làm mới danh sách hội thoại để cập nhật snippet và đưa lên đầu
+      // InvalidateQueries sẽ tự động trigger một lần fetch mới
+      // Chúng ta cần projectId để làm điều này, có thể lấy từ message object nếu backend trả về
+      // Hoặc chúng ta có thể tìm trong cache của conversations
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    };
+
+    // Lắng nghe sự kiện visitor đang gõ
+    const handleVisitorTyping = (payload: {
+      conversationId: number;
+      isTyping: boolean;
+    }) => {
+      // TODO: Cập nhật UI để hiển thị chỉ báo "Visitor is typing..."
+      // Ví dụ: setTypingStatus(payload.conversationId, payload.isTyping)
+      console.log(
+        `Visitor in convo ${payload.conversationId} is typing: ${payload.isTyping}`
       );
     };
 
-    const handleMessageStatusUpdate = (update: MessageStatusUpdate) => {
-      queryClient.setQueryData(
-        ["messages", update.conversationId],
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          const newPages = oldData.pages.map((page: Message[]) =>
-            page.map((msg) =>
-              msg.id === update.id ? { ...msg, ...update } : msg
-            )
-          );
-          return { ...oldData, pages: newPages };
-        }
-      );
-    };
+    // Đăng ký lắng nghe các sự kiện với tên đã được thống nhất
+    socket.on("newMessage", handleNewMessage); // Sự kiện khi có tin mới từ visitor
+    socket.on("agentReplied", handleNewMessage); // Sự kiện khi agent khác trả lời
+    socket.on("visitorIsTyping", handleVisitorTyping); // Sự kiện khi visitor đang gõ
 
-    const handleNewComment = (newComment: Comment) => {
-      queryClient.setQueryData(
-        ["comments", newComment.facebookPostId],
-        (oldData: any) => {
-          if (!oldData)
-            return { pages: [[newComment]], pageParams: [undefined] };
-
-          // Idempotency check
-          const commentExists = oldData.pages
-            .flat()
-            .some((c: Comment) => c.id === newComment.id);
-          if (commentExists) return oldData;
-
-          const newData = { ...oldData };
-          newData.pages[0] = [newComment, ...newData.pages[0]];
-          return newData;
-        }
-      );
-    };
-
-    const handleCommentStatusUpdate = (update: CommentStatusUpdate) => {
-      queryClient.setQueryData(
-        ["comments", update.facebookPostId],
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          const newPages = oldData.pages.map((page: Comment[]) =>
-            page.map((c) => (c.id === update.id ? { ...c, ...update } : c))
-          );
-          return { ...oldData, pages: newPages };
-        }
-      );
-    };
-
-    socket.on("message:new", handleNewMessage);
-    socket.on("message:status:updated", handleMessageStatusUpdate);
-    socket.on("comment:created", handleNewComment);
-    socket.on("comment:updated", handleCommentStatusUpdate);
-
+    // Dọn dẹp khi component unmount
     return () => {
-      socket.off("message:new", handleNewMessage);
-      socket.off("message:status:updated", handleMessageStatusUpdate);
-      socket.off("comment:created", handleNewComment);
-      socket.off("comment:updated", handleCommentStatusUpdate);
+      socket.off("newMessage", handleNewMessage);
+      socket.off("agentReplied", handleNewMessage);
+      socket.off("visitorIsTyping", handleVisitorTyping);
     };
   }, [socket, queryClient]);
 };
 
-// --- The Context and Provider ---
+// --- Context, Provider, và Hook useSocket ---
 interface SocketContextType {
   socket: Socket | null;
 }
@@ -147,15 +81,15 @@ export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const { accessToken } = useAuthStore.getState();
+  const accessToken = useAuthStore((state) => state.accessToken);
 
-  // This hook will listen for events and update the cache
   useRealtimeCacheUpdater(socket);
 
   useEffect(() => {
+    // Chỉ tạo kết nối khi có accessToken
     if (accessToken) {
       const newSocket = io(import.meta.env.VITE_API_URL, {
-        autoConnect: false,
+        // autoConnect: false, // Nên để tự động kết nối
         auth: {
           token: accessToken,
         },
@@ -163,19 +97,23 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
       setSocket(newSocket);
 
-      newSocket.connect();
+      newSocket.on("connect", () =>
+        console.log("Socket connected:", newSocket.id)
+      );
+      newSocket.on("disconnect", (reason) =>
+        console.log("Socket disconnected:", reason)
+      );
 
-      newSocket.on("connect", () => {
-        console.log("Socket connected:", newSocket.id);
-      });
-
-      newSocket.on("disconnect", (reason) => {
-        console.log("Socket disconnected:", reason);
-      });
-
+      // Dọn dẹp kết nối cũ khi component unmount hoặc accessToken thay đổi
       return () => {
         newSocket.disconnect();
       };
+    } else {
+      // Nếu không có token (logout), đảm bảo socket được ngắt và dọn dẹp
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+      }
     }
   }, [accessToken]);
 

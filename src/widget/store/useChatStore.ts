@@ -26,7 +26,7 @@ interface ChatState {
   setConnectionStatus: (status: ConnectionStatus) => void;
   incrementUnreadCount: () => void;
   resetUnreadCount: () => void;
-  setAgentTyping: (isTyping: boolean) => void;
+  setAgentIsTyping: (isTyping: boolean) => void;
   loadConversationHistory: (history: Message[]) => void;
 }
 
@@ -61,7 +61,7 @@ export const useChatStore = create<ChatState>((set) => ({
 
   resetUnreadCount: () => set({ unreadCount: 0 }),
 
-  setAgentTyping: (isTyping) => set({ isAgentTyping: isTyping }),
+  setAgentIsTyping: (isTyping) => set({ isAgentTyping: isTyping }),
 
   loadConversationHistory: (history) => set({ messages: history }),
 }));

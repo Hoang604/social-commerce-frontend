@@ -46,7 +46,34 @@ interface PaginatedResponse<T> {
   limit: number;
 }
 
+interface UpdateConversationPayload {
+  conversationId: number;
+  status: "open" | "closed";
+}
+
 // --- API Functions ---
+
+export const updateConversationStatus = async (
+  payload: UpdateConversationPayload
+) => {
+  const response = await api.patch(
+    `/inbox/conversations/${payload.conversationId}`,
+    { status: payload.status }
+  );
+  return response.data;
+};
+
+interface AgentTypingPayload {
+  conversationId: number;
+  isTyping: boolean;
+}
+
+export const sendAgentTypingStatus = async (payload: AgentTypingPayload) => {
+  // API này trả về 204 No Content, nên không cần xử lý response.data
+  await api.post(`/inbox/conversations/${payload.conversationId}/typing`, {
+    isTyping: payload.isTyping,
+  });
+};
 
 const getConversationsByProjectId = async (
   projectId: number
@@ -163,6 +190,17 @@ export const useSendAgentReply = () => {
       // Invalidate conversations to update last message snippet
       // We need projectId here, which should be passed down to MessageComposer or retrieved differently
       // queryClient.invalidateQueries({ queryKey: ['conversations', projectId] });
+    },
+  });
+};
+
+export const useUpdateConversationStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateConversationStatus,
+    onSuccess: () => {
+      // Làm mới lại danh sách conversations để cập nhật giao diện
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
 };

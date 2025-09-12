@@ -3,6 +3,7 @@ import { render } from "preact";
 import App from "./App";
 import { getWidgetSettings } from "./services/widgetApi";
 import { useChatStore } from "./store/useChatStore";
+import { socketService } from "./services/socketService";
 
 const WIDGET_SCRIPT_ID = "your-app-widget-script";
 let isInitialized = false;
@@ -59,7 +60,7 @@ async function initializeWidget(config: {
       .getState()
       .setWidgetConfig({ ...settings, projectId: config.projectId });
 
-    // Note: Visitor info from config can be stored here as well if needed
+    socketService.connect(config.projectId, visitorUid);
 
     // 4. Create the DOM host and render the app
     const shadowRoot = createHostElement();

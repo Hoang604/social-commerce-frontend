@@ -14,7 +14,7 @@ export async function getWidgetSettings(
   projectId: string
 ): Promise<WidgetConfig> {
   const response = await fetch(
-    `${API_BASE_URL}/api/v1/public/projects/${projectId}/widget-settings`
+    `${API_BASE_URL}/public/projects/${projectId}/widget-settings`
   );
 
   if (!response.ok) {

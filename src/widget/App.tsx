@@ -1,13 +1,12 @@
 // src/widget/App.tsx
 import { useChatStore } from "./store/useChatStore";
-import { useWebSocket } from "./hooks/useWebSocket";
 import { Launcher } from "./components/Launcher";
 import { ChatWindow } from "./components/ChatWindow";
-import { webSocketService } from "./services/webSocketService";
+import { socketService } from "./services/socketService";
 import { type Message } from "./types";
 
 const App = () => {
-  // --- Nhiệm vụ 1: Kết nối với State Store ---
+  // Nhiệm vụ 1: Lấy state từ store (đơn giản hơn)
   const {
     widgetConfig,
     isWindowOpen,
@@ -16,19 +15,11 @@ const App = () => {
     connectionStatus,
     isAgentTyping,
     toggleWindow,
-    addMessage,
+    addMessage, // Giữ lại để dùng cho optimistic UI
     resetUnreadCount,
-    updateMessageStatus,
   } = useChatStore();
 
-  // --- Nhiệm vụ 2: Quản lý Tác vụ Nền ---
-  const visitorUid = localStorage.getItem("visitor_uid");
-  useWebSocket({
-    projectId: widgetConfig?.projectId,
-    visitorUid: visitorUid || undefined,
-  });
-
-  // --- Nhiệm vụ 3: Định nghĩa các Hàm Xử lý Sự kiện ---
+  // Nhiệm vụ 3: Đơn giản hóa các hàm xử lý
   const handleToggleWindow = () => {
     toggleWindow();
     if (!isWindowOpen) {
@@ -38,7 +29,7 @@ const App = () => {
 
   const handleSendMessage = (content: string) => {
     const tempId = crypto.randomUUID();
-    const newMessage: Message = {
+    const optimisticMessage: Message = {
       id: tempId,
       content,
       sender: { type: "visitor" },
@@ -46,31 +37,22 @@ const App = () => {
       timestamp: new Date().toISOString(),
     };
 
-    // Optimistic UI update
-    addMessage(newMessage);
+    addMessage(optimisticMessage); // Cập nhật giao diện ngay lập tức
 
-    // Send to server
-    webSocketService.sendMessage("sendMessage", { content });
+    socketService.emitSendMessage(content); // Gửi tin nhắn qua service
 
-    // Fallback in case ack is not received
-    setTimeout(() => {
-      const msg = useChatStore.getState().messages.find((m) => m.id === tempId);
-      if (msg && msg.status === "sending") {
-        updateMessageStatus(tempId, "failed");
-      }
-    }, 5000);
+    // Bạn có thể thêm logic timeout/retry ở trong socketService nếu muốn
   };
 
   const handleTypingChange = (isTyping: boolean) => {
-    webSocketService.sendMessage("visitorTyping", { isTyping });
+    socketService.emitVisitorIsTyping(isTyping); // Gửi trạng thái gõ qua service
   };
 
-  // --- Nhiệm vụ 2 (tiếp): Xử lý Trạng thái Tải ---
+  // ... (phần render giữ nguyên) ...
   if (!widgetConfig) {
-    return null; // Don't render anything until config is loaded
+    return null;
   }
 
-  // --- Nhiệm vụ 4: Lắp ráp Giao diện ---
   return (
     <>
       <ChatWindow
