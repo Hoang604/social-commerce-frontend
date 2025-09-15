@@ -20,17 +20,17 @@ const getInitials = (name: string): string => {
 
 export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
   ({ src, name, className = "" }, ref) => {
-    // SỬA LỖI: Định nghĩa các lớp mặc định, sau đó dùng cn để kết hợp
+    // FIX: Define default classes, then use cn to combine
     const defaultClasses =
       "w-10 h-10 rounded-full object-cover bg-muted flex items-center justify-center";
-    const combinedClasses = cn(defaultClasses, className); // <-- Kết hợp các lớp
+    const combinedClasses = cn(defaultClasses, className); // Combine classes
 
     if (src) {
       return (
         <img
           src={src}
           alt={name || "User Avatar"}
-          className={combinedClasses} // <-- Áp dụng các lớp đã kết hợp
+          className={combinedClasses} // Apply combined classes
         />
       );
     }
@@ -40,7 +40,7 @@ export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
     return (
       <div
         ref={ref}
-        className={combinedClasses} // <-- Áp dụng các lớp đã kết hợp
+        className={combinedClasses} // Apply combined classes
       >
         <span className="font-semibold text-muted-foreground">{initials}</span>
       </div>

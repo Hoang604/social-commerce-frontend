@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../lib/api";
 
 // === TYPES ===
-// Định nghĩa các kiểu dữ liệu cho request và response
+// Define data types for request and response
 export interface User {
   id: string;
   email: string;
@@ -24,12 +24,12 @@ interface UpdateProfilePayload {
   timezone?: string;
 }
 
-// Dữ liệu backend trả về khi tạo mã QR
+// Backend data returned when creating QR code
 interface Generate2FAResponse {
   qrCodeDataURL: string;
 }
 
-// Dữ liệu backend trả về khi bật 2FA thành công
+// Backend data returned when 2FA is successfully enabled
 interface TurnOn2FAResponse {
   message: string;
   recoveryCodes: string[];
@@ -47,7 +47,7 @@ interface ChangePasswordResponse {
   accessToken: string;
 }
 
-// Thêm vào đầu file src/services/settingsApi.ts
+// Add to the beginning of src/services/settingsApi.ts
 
 interface ChangePasswordPayload {
   currentPassword: string;
@@ -76,12 +76,12 @@ export const requestEmailChange = async (
 };
 
 const settingsKeys = {
-  profile: ["me"] as const, // Đổi thành 'me' để khớp với các file khác
+  profile: ["me"] as const, // Change to 'me' to match other files
   connectedPages: ["connectedPages"] as const,
 };
 
 // === API FUNCTIONS ===
-// Tách logic gọi API ra các hàm riêng biệt
+// Separate API call logic into individual functions
 export const fetchUserProfile = async (): Promise<User> => {
   const response = await api.get("/user/me");
   return response.data;
@@ -121,7 +121,7 @@ export const disconnectPage = async (pageId: string): Promise<void> => {
 };
 
 // === REACT QUERY HOOKS ===
-// Các hooks này sẽ sử dụng các hàm API ở trên
+// These hooks will use the API functions above
 
 export const useChangePasswordMutation = () => {
   return useMutation({

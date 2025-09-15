@@ -1,8 +1,8 @@
 // src/components/features/inbox/ConversationList.tsx
-
-import { useParams, NavLink } from "react-router-dom";
+import { NavLink, useParams } from "react-router-dom";
 import { useGetConversations } from "../../../services/inboxApi";
 import { Spinner } from "../../ui/Spinner";
+import { cn } from "../../../lib/utils";
 
 export const ConversationList = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -10,6 +10,8 @@ export const ConversationList = () => {
 
   const { data: conversationsResponse, isLoading } =
     useGetConversations(numericProjectId);
+
+  const conversations = conversationsResponse?.data || [];
 
   if (isLoading) {
     return (
@@ -19,14 +21,15 @@ export const ConversationList = () => {
     );
   }
 
-  const conversations = conversationsResponse?.data || [];
-
   if (conversations.length === 0) {
     return (
       <div className="p-4 text-center text-muted-foreground h-full flex flex-col justify-center">
-        <h3 className="font-semibold text-foreground">No conversations yet</h3>
+        <h3 className="font-semibold text-foreground">
+          Chưa có cuộc trò chuyện nào
+        </h3>
         <p className="text-sm mt-1">
-          When your website visitors send a message, it will appear here.
+          Khi khách truy cập trang web của bạn gửi tin nhắn, nó sẽ xuất hiện ở
+          đây.
         </p>
       </div>
     );
@@ -34,22 +37,33 @@ export const ConversationList = () => {
 
   return (
     <nav className="flex-1">
-      {/* SỬA LỖI: Truy cập vào conversationsResponse.data để map */}
       {conversations.map((convo) => (
         <NavLink
           key={convo.id}
           to={`/inbox/projects/${projectId}/conversations/${convo.id}`}
           className={({ isActive }) =>
-            `block p-4 border-b hover:bg-gray-50 dark:hover:bg-gray-800 ${
-              isActive ? "bg-blue-50 dark:bg-gray-900" : ""
-            }`
+            cn(
+              "block p-4 border-b transition-colors",
+              "hover:bg-accent hover:text-accent-foreground",
+              "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
+              isActive
+                ? "bg-accent text-accent-foreground"
+                : "bg-card text-card-foreground"
+            )
           }
         >
-          <p className="font-semibold text-foreground">
-            {convo.visitor.displayName}
-          </p>
-          <p className="text-sm text-muted-foreground truncate">
-            {convo.lastMessageSnippet || "No messages yet."}
+          <div className="flex justify-between items-center">
+            <p className="font-semibold truncate">
+              {convo.visitor.displayName}
+            </p>
+            {convo.unreadCount > 0 && (
+              <span className="bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                {convo.unreadCount}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground truncate mt-1">
+            {convo.lastMessageSnippet || "Chưa có tin nhắn."}
           </p>
         </NavLink>
       ))}

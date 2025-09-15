@@ -1,5 +1,5 @@
 // src/pages/auth/AuthCallbackPage.tsx
-import { useEffect, useRef } from "react"; // 1. Import thêm useRef
+import { useEffect, useRef } from "react"; // 1. Import useRef
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { Spinner } from "../../components/ui/Spinner";
@@ -9,16 +9,16 @@ import { useToast } from "../../components/ui/use-toast";
 export const AuthCallbackPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  // 2. Lấy action từ store theo cách đúng chuẩn của React
+  // 2. Get action from store in the correct React way
   const setAuthData = useAuthStore((state) => state.setAuthData);
   const { toast } = useToast();
 
-  // 3. Sử dụng ref để đảm bảo effect chỉ chạy logic chính một lần duy nhất
+  // 3. Use ref to ensure effect runs main logic only once
   const effectRan = useRef(false);
 
   useEffect(() => {
-    // Trong môi trường dev với StrictMode, effect sẽ chạy 2 lần.
-    // Ref này sẽ ngăn chặn việc gọi API ở lần chạy thứ 2.
+    // In dev environment with StrictMode, effect will run twice.
+    // This ref will prevent API calls on the second run.
     if (effectRan.current === true) {
       return;
     }
@@ -55,11 +55,11 @@ export const AuthCallbackPage = () => {
       navigate("/login", { replace: true });
     }
 
-    // Đánh dấu là effect đã chạy logic
+    // Mark that the effect has run the logic
     return () => {
       effectRan.current = true;
     };
-    // 4. Dependency array được giữ gọn gàng
+    // 4. Dependency array is kept clean
   }, [searchParams, navigate, setAuthData, toast]);
 
   return (

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
-// SỬA LỖI: Import hàm verify2FA mới
+// FIX: Import new verify2FA function
 import { verify2FA } from "../../services/authApi";
 import AuthLayout from "../../components/layout/AuthLayout";
 import { Button } from "../../components/ui/Button";
@@ -30,9 +30,9 @@ const Verify2faPage = () => {
     }
     setIsLoading(true);
     try {
-      // Gọi hàm verify2FA đã được import
+      // Call the imported verify2FA function
       const response = await verify2FA(code);
-      // Lưu token và thông tin người dùng vào store
+      // Save token and user information to store
       login(response.user, response.accessToken);
       navigate(from, { replace: true });
     } catch (error) {

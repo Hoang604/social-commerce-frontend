@@ -1,19 +1,13 @@
-// src/widget/main.tsx
 import { render } from "preact";
 import App from "./App";
 import { getWidgetSettings } from "./services/widgetApi";
 import { useChatStore } from "./store/useChatStore";
 import { socketService } from "./services/socketService";
+import widgetStyles from "./index.css?inline";
 
 const WIDGET_SCRIPT_ID = "your-app-widget-script";
 let isInitialized = false;
 
-/**
- * Creates the host div and attaches a Shadow DOM for UI isolation.
- * It also clones stylesheets from the main document to ensure styles
- * (like Tailwind utilities) are available within the widget.
- * @returns The created ShadowRoot.
- */
 function createHostElement(): ShadowRoot {
   const hostElement = document.createElement("div");
   hostElement.id = "live-chat-widget-host";
@@ -21,12 +15,9 @@ function createHostElement(): ShadowRoot {
 
   const shadowRoot = hostElement.attachShadow({ mode: "open" });
 
-  // Clone stylesheets from the main document head into the Shadow DOM
-  document
-    .querySelectorAll('style, link[rel="stylesheet"]')
-    .forEach((styleSheet) => {
-      shadowRoot.appendChild(styleSheet.cloneNode(true));
-    });
+  const styleElement = document.createElement("style");
+  styleElement.textContent = widgetStyles;
+  shadowRoot.appendChild(styleElement);
 
   return shadowRoot;
 }

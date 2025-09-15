@@ -3,12 +3,12 @@ import { io, Socket } from "socket.io-client";
 import { useChatStore } from "../store/useChatStore";
 import { type Message } from "../types";
 
-const SOCKET_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+const SOCKET_URL = import.meta.env.VITE_API_BASE_URL;
 
 class SocketService {
   private socket: Socket | null = null;
 
-  // Phương thức kết nối và lắng nghe sự kiện
+  // Method to connect and listen for events
   public connect(projectId: string, visitorUid: string): void {
     if (this.socket?.connected) return;
 
@@ -26,12 +26,12 @@ class SocketService {
       reconnectionDelay: 5000,
     });
 
-    // --- Lắng nghe các sự kiện từ Server ---
+    // --- Listen for events from the Server ---
 
     this.socket.on("connect", () => {
       console.log("Socket.IO connected:", this.socket?.id);
       setConnectionStatus("connected");
-      // Gửi sự kiện định danh ngay sau khi kết nối
+      // Send identification event immediately after connecting
       this.socket?.emit("identify", { projectId, visitorUid });
     });
 
@@ -41,10 +41,12 @@ class SocketService {
     });
 
     this.socket.on("conversationHistory", (data: { messages: Message[] }) => {
+      console.log("DATA FROM conversationHistory:", data.messages);
       loadConversationHistory(data.messages);
     });
 
-    this.socket.on("agentReply", (newMessage: Message) => {
+    this.socket.on("agentReplied", (newMessage: Message) => {
+      console.log("New message from agent:", newMessage);
       addMessage(newMessage);
       if (!useChatStore.getState().isWindowOpen) {
         incrementUnreadCount();
@@ -59,7 +61,7 @@ class SocketService {
     );
   }
 
-  // --- Các phương thức để gửi sự kiện lên Server ---
+  // --- Methods to send events to the Server ---
 
   public emitSendMessage(content: string): void {
     this.socket?.emit("sendMessage", { content });
@@ -69,11 +71,18 @@ class SocketService {
     this.socket?.emit("visitorIsTyping", { isTyping });
   }
 
+  public emitUpdateContext(currentUrl: string): void {
+    if (this.socket?.connected) {
+      this.socket.emit("updateContext", { currentUrl });
+      console.log(`Context updated: ${currentUrl}`);
+    }
+  }
+
   public disconnect(): void {
     this.socket?.disconnect();
     this.socket = null;
   }
 }
 
-// Xuất khẩu một instance duy nhất (singleton) để toàn bộ widget sử dụng
+// Export a single instance (singleton) for the entire widget to use
 export const socketService = new SocketService();

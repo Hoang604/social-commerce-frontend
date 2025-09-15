@@ -1,6 +1,6 @@
 // src/widget/components/Composer.tsx
 import { useState, useRef } from "preact/hooks";
-import type { FormEvent } from "react";
+import type { FormEvent, KeyboardEvent } from "react";
 import { type ConnectionStatus } from "../types";
 
 interface ComposerProps {
@@ -8,6 +8,42 @@ interface ComposerProps {
   onTypingChange: (isTyping: boolean) => void;
   connectionStatus: ConnectionStatus;
 }
+
+// Styles are written directly to avoid dependency on parent page's classes
+const styles = {
+  form: {
+    padding: "0.5rem",
+    borderTop: "1px solid var(--widget-border-color)",
+  },
+  container: {
+    display: "flex",
+    alignItems: "center",
+    backgroundColor: "var(--widget-composer-background)",
+    borderRadius: "0.5rem",
+    padding: "0.25rem",
+  },
+  textarea: {
+    width: "100%",
+    backgroundColor: "transparent",
+    resize: "none" as const,
+    border: "none",
+    padding: "0.5rem",
+    color: "var(--widget-text-primary)", // Text color is taken from theme
+    outline: "none", // Remove default focus ring
+  },
+  button: {
+    padding: "0.5rem",
+    color: "var(--widget-primary-color)",
+    transition: "color 0.2s",
+    border: "none",
+    background: "none",
+    cursor: "pointer",
+  },
+  buttonDisabled: {
+    color: "var(--widget-text-secondary)",
+    cursor: "not-allowed",
+  },
+};
 
 const SendIcon = () => (
   <svg
@@ -50,6 +86,21 @@ export const Composer = ({
     }, 1500);
   };
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (content.trim() && !isDisabled) {
+        onSendMessage(content.trim());
+        setContent("");
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = null;
+        }
+        onTypingChange(false);
+      }
+    }
+  };
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (content.trim()) {
@@ -63,21 +114,27 @@ export const Composer = ({
     }
   };
 
+  const buttonStyle = {
+    ...styles.button,
+    ...((!content.trim() || isDisabled) && styles.buttonDisabled),
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="p-2 border-t">
-      <div className="flex items-center bg-gray-100 rounded-lg p-1">
+    <form onSubmit={handleSubmit} style={styles.form}>
+      <div style={styles.container}>
         <textarea
           value={content}
           onInput={handleTyping}
+          onKeyDown={handleKeyDown}
           disabled={isDisabled}
-          placeholder={isDisabled ? "Connecting..." : "Type a message..."}
-          className="w-full bg-transparent resize-none border-none focus:ring-0 p-2"
+          placeholder={isDisabled ? "Đang kết nối..." : "Nhập tin nhắn..."}
+          style={styles.textarea}
           rows={1}
         />
         <button
           type="submit"
           disabled={!content.trim() || isDisabled}
-          className="p-2 text-blue-500 disabled:text-gray-400 transition-colors"
+          style={buttonStyle}
         >
           <SendIcon />
         </button>

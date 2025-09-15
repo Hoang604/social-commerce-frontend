@@ -24,7 +24,7 @@ import {
 
 // ========================================================================
 // SECTION 1: TWO-FACTOR AUTHENTICATION
-// Logic và JSX cho 2FA được đưa vào đây, giữ nguyên 100%
+// 2FA Logic and JSX are placed here, kept 100% as is
 // ========================================================================
 const TwoFactorAuthSection = () => {
   const user = useAuthStore((state) => state.user);
@@ -260,7 +260,7 @@ const TwoFactorAuthSection = () => {
 
 // ========================================================================
 // SECTION 2: CHANGE PASSWORD
-// Component mới cho việc thay đổi mật khẩu
+// New component for changing password
 // ========================================================================
 const ChangePasswordForm = () => {
   const {
@@ -389,7 +389,7 @@ const ChangePasswordForm = () => {
 
 // ========================================================================
 // SECTION 3: CHANGE EMAIL
-// Component mới cho việc thay đổi email
+// New component for changing email
 // ========================================================================
 const ChangeEmailForm = () => {
   const user = useAuthStore((state) => state.user);

@@ -10,7 +10,7 @@ export const PinInput: React.FC<PinInputProps> = ({ length, onComplete }) => {
   const [pin, setPin] = useState<string[]>(new Array(length).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Focus vào ô đầu tiên khi component mount
+  // Focus on the first input field when component mounts
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);

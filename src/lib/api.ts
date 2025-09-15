@@ -11,10 +11,12 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// --- Interceptor 1: Ghi log và đính kèm Access Token cho mỗi Request ---
+// --- Interceptor 1: Log and attach Access Token for each Request ---
+
 api.interceptors.request.use(
   (config) => {
-    // Lấy token từ store
+        // Get token from store
+
     const token = useAuthStore.getState().accessToken;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -41,7 +43,7 @@ api.interceptors.request.use(
   }
 );
 
-// --- Interceptor 2: Ghi log và xử lý Response/Error ---
+// --- Interceptor 2: Log and handle Response/Error ---
 api.interceptors.response.use(
   (response) => {
     // --- LOGGING ---
@@ -60,7 +62,7 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // --- LOGGING ---
-    // Log lỗi trước khi xử lý
+    // Log error before processing
     console.groupCollapsed(
       `[API Error] << ${
         error.response?.status
@@ -78,7 +80,7 @@ api.interceptors.response.use(
       originalRequest.url.includes("/exchange-code") ||
       originalRequest.url.includes("/auth/refresh");
 
-    // Logic xử lý refresh token đã có
+    // Existing refresh token handling logic
     if (
       error.response.status === 401 &&
       error.response.data.errorCode === "TOKEN_INVALID" &&

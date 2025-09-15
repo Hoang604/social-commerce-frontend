@@ -17,7 +17,7 @@ const LoginPage = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // [3] State để ẩn/hiện mật khẩu
+  const [showPassword, setShowPassword] = useState(false); // [3] State to hide/show password
 
   const { mutate: login, isPending } = useLoginMutation({
     onSuccess: (data) => {
@@ -80,7 +80,7 @@ const LoginPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isPending || isGoogleLoading}
               />
-              {/* [7] Nút ẩn/hiện mật khẩu */}
+              {/* [7] Button to hide/show password */}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}

@@ -11,24 +11,24 @@ import { useAuthStore } from "../stores/authStore";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Message } from "../services/inboxApi"; // Import types từ inboxApi
 
-// --- Hook cập nhật cache Real-time ---
+// --- Real-time cache update hook ---
 const useRealtimeCacheUpdater = (socket: Socket | null) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!socket) return;
 
-    // Hàm xử lý chung cho tin nhắn mới (từ visitor hoặc agent khác)
+    // General handler for new messages (from visitor or other agent)
     const handleNewMessage = (newMessage: Message) => {
       const conversationId = newMessage.conversationId;
 
-      // 1. Cập nhật cache của danh sách tin nhắn
+      // 1. Update message list cache
       queryClient.setQueryData<Message[]>(
         ["messages", conversationId],
         (oldData) => {
           if (!oldData) return [newMessage];
 
-          // Chống trùng lặp: Nếu tin nhắn đã tồn tại trong cache thì không làm gì cả
+          // Anti-duplication: If the message already exists in the cache, do nothing
           if (oldData.some((msg) => msg.id === newMessage.id)) {
             return oldData;
           }
@@ -36,32 +36,27 @@ const useRealtimeCacheUpdater = (socket: Socket | null) => {
           return [...oldData, newMessage];
         }
       );
-
-      // 2. Làm mới danh sách hội thoại để cập nhật snippet và đưa lên đầu
-      // InvalidateQueries sẽ tự động trigger một lần fetch mới
-      // Chúng ta cần projectId để làm điều này, có thể lấy từ message object nếu backend trả về
-      // Hoặc chúng ta có thể tìm trong cache của conversations
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     };
 
-    // Lắng nghe sự kiện visitor đang gõ
+    // Listen for visitor typing event
     const handleVisitorTyping = (payload: {
       conversationId: number;
       isTyping: boolean;
     }) => {
-      // TODO: Cập nhật UI để hiển thị chỉ báo "Visitor is typing..."
-      // Ví dụ: setTypingStatus(payload.conversationId, payload.isTyping)
+      // TODO: Update UI to display "Visitor is typing..." indicator
+      // Example: setTypingStatus(payload.conversationId, payload.isTyping)
       console.log(
         `Visitor in convo ${payload.conversationId} is typing: ${payload.isTyping}`
       );
     };
 
-    // Đăng ký lắng nghe các sự kiện với tên đã được thống nhất
-    socket.on("newMessage", handleNewMessage); // Sự kiện khi có tin mới từ visitor
-    socket.on("agentReplied", handleNewMessage); // Sự kiện khi agent khác trả lời
-    socket.on("visitorIsTyping", handleVisitorTyping); // Sự kiện khi visitor đang gõ
+    // Register to listen for events with agreed-upon names
+    socket.on("newMessage", handleNewMessage); // Event when there is a new message from visitor
+    socket.on("agentReplied", handleNewMessage); // Event when another agent replies
+    socket.on("visitorIsTyping", handleVisitorTyping); // Event when visitor is typing
 
-    // Dọn dẹp khi component unmount
+    // Clean up when component unmounts
     return () => {
       socket.off("newMessage", handleNewMessage);
       socket.off("agentReplied", handleNewMessage);
@@ -70,7 +65,7 @@ const useRealtimeCacheUpdater = (socket: Socket | null) => {
   }, [socket, queryClient]);
 };
 
-// --- Context, Provider, và Hook useSocket ---
+// --- Context, Provider, and useSocket Hook ---
 interface SocketContextType {
   socket: Socket | null;
 }
@@ -86,10 +81,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   useRealtimeCacheUpdater(socket);
 
   useEffect(() => {
-    // Chỉ tạo kết nối khi có accessToken
+    // Only create connection when accessToken is available
     if (accessToken) {
+      console.log("Establishing socket connection with token:", accessToken);
       const newSocket = io(import.meta.env.VITE_API_URL, {
-        // autoConnect: false, // Nên để tự động kết nối
+        // autoConnect: false, // Should allow auto-connect
         auth: {
           token: accessToken,
         },
@@ -104,12 +100,12 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         console.log("Socket disconnected:", reason)
       );
 
-      // Dọn dẹp kết nối cũ khi component unmount hoặc accessToken thay đổi
+      // Clean up old connection when component unmounts or accessToken changes
       return () => {
         newSocket.disconnect();
       };
     } else {
-      // Nếu không có token (logout), đảm bảo socket được ngắt và dọn dẹp
+      // If no token (logout), ensure socket is disconnected and cleaned up
       if (socket) {
         socket.disconnect();
         setSocket(null);

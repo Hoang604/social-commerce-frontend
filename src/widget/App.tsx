@@ -4,9 +4,10 @@ import { Launcher } from "./components/Launcher";
 import { ChatWindow } from "./components/ChatWindow";
 import { socketService } from "./services/socketService";
 import { type Message } from "./types";
+import { useEffect, useRef } from "react";
 
 const App = () => {
-  // Nhiệm vụ 1: Lấy state từ store (đơn giản hơn)
+  // Task 1: Get state from store (simpler)
   const {
     widgetConfig,
     isWindowOpen,
@@ -15,11 +16,55 @@ const App = () => {
     connectionStatus,
     isAgentTyping,
     toggleWindow,
-    addMessage, // Giữ lại để dùng cho optimistic UI
+    addMessage, // Keep for optimistic UI
     resetUnreadCount,
   } = useChatStore();
 
-  // Nhiệm vụ 3: Đơn giản hóa các hàm xử lý
+  const lastUrl = useRef(window.location.href);
+
+  useEffect(() => {
+    // Send context for the first time (keep as is)
+    const initialContextTimeout = setTimeout(() => {
+      socketService.emitUpdateContext(window.location.href);
+    }, 1000);
+
+    // --- Instant URL tracking logic ---
+
+    // General handler when URL changes
+    const handleUrlChange = () => {
+      // Use requestAnimationFrame to ensure URL is fully updated
+      requestAnimationFrame(() => {
+        const currentUrl = window.location.href;
+        if (currentUrl !== lastUrl.current) {
+          lastUrl.current = currentUrl;
+          socketService.emitUpdateContext(currentUrl);
+        }
+      });
+    };
+
+    // Override (monkey-patch) history.pushState to create a custom event
+    const originalPushState = history.pushState;
+    history.pushState = function (...args) {
+      originalPushState.apply(this, args);
+      // Emit 'pushstate' event so we can listen
+      window.dispatchEvent(new Event("pushstate"));
+    };
+
+    // Listen for navigation events
+    window.addEventListener("popstate", handleUrlChange); // Back/forward button
+    window.addEventListener("pushstate", handleUrlChange); // SPA navigation
+
+    // Clean up when component unmounts
+    return () => {
+      clearTimeout(initialContextTimeout);
+      window.removeEventListener("popstate", handleUrlChange);
+      window.removeEventListener("pushstate", handleUrlChange);
+      // Restore original pushState function
+      history.pushState = originalPushState;
+    };
+  }, []);
+
+  // Task 3: Simplify handling functions
   const handleToggleWindow = () => {
     toggleWindow();
     if (!isWindowOpen) {
@@ -37,39 +82,40 @@ const App = () => {
       timestamp: new Date().toISOString(),
     };
 
-    addMessage(optimisticMessage); // Cập nhật giao diện ngay lập tức
+    addMessage(optimisticMessage); // Update UI immediately
 
-    socketService.emitSendMessage(content); // Gửi tin nhắn qua service
+    socketService.emitSendMessage(content); // Send message via service
 
-    // Bạn có thể thêm logic timeout/retry ở trong socketService nếu muốn
+    // You can add timeout/retry logic in socketService if desired
   };
 
   const handleTypingChange = (isTyping: boolean) => {
-    socketService.emitVisitorIsTyping(isTyping); // Gửi trạng thái gõ qua service
+    socketService.emitVisitorIsTyping(isTyping); // Send typing status via service
   };
 
-  // ... (phần render giữ nguyên) ...
   if (!widgetConfig) {
     return null;
   }
 
   return (
     <>
-      <ChatWindow
-        isOpen={isWindowOpen}
-        onClose={handleToggleWindow}
-        config={widgetConfig}
-        messages={messages}
-        connectionStatus={connectionStatus}
-        isAgentTyping={isAgentTyping}
-        onSendMessage={handleSendMessage}
-        onTypingChange={handleTypingChange}
-      />
-      <Launcher
-        onClick={handleToggleWindow}
-        unreadCount={unreadCount}
-        primaryColor={widgetConfig.primaryColor}
-      />
+      <div className="text-black bg-white">
+        <ChatWindow
+          isOpen={isWindowOpen}
+          onClose={handleToggleWindow}
+          config={widgetConfig}
+          messages={messages}
+          connectionStatus={connectionStatus}
+          isAgentTyping={isAgentTyping}
+          onSendMessage={handleSendMessage}
+          onTypingChange={handleTypingChange}
+        />
+        <Launcher
+          onClick={handleToggleWindow}
+          unreadCount={unreadCount}
+          primaryColor={widgetConfig.primaryColor}
+        />
+      </div>
     </>
   );
 };

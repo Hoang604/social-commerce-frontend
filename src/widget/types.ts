@@ -6,7 +6,7 @@ export type MessageSender = {
 };
 
 export type Message = {
-  id: string | number; // Dùng string cho optimistic UI, number cho tin nhắn từ server
+  id: string | number;
   content: string;
   sender: MessageSender;
   status: MessageStatus;

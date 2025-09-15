@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { initializeTheme } from "./stores/themeStore.ts";
 
-initializeTheme(); // <-- GỌI HÀM NÀY Ở ĐÂY
+initializeTheme(); // CALL THIS FUNCTION HERE
 
 const queryClient = new QueryClient();
 

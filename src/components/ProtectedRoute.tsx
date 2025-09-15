@@ -10,11 +10,11 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   if (!isAuthenticated) {
-    // Chuyển hướng người dùng về trang đăng nhập
+    // Redirect user to login page
     return <Navigate to="/login" replace />;
   }
 
-  // Nếu có children thì render children, không thì render Outlet
+  // If there are children, render children, otherwise render Outlet
   return children ? <>{children}</> : <Outlet />;
 };
 

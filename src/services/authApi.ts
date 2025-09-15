@@ -53,11 +53,11 @@ const registerUser = async (
   return data;
 };
 
-// --- HÀM MỚI ---
+// --- NEW FUNCTION ---
 /**
- * Gửi mã 2FA đến backend để xác thực và hoàn tất đăng nhập.
- * @param code - Mã 6 số từ ứng dụng xác thực.
- * @returns {Promise<AuthResponse>} Dữ liệu người dùng và access token đầy đủ.
+ * Sends the 2FA code to the backend for authentication and to complete login.
+ * @param code - The 6-digit code from the authenticator app.
+ * @returns {Promise<AuthResponse>} Full user data and access token.
  */
 export const verify2FA = async (code: string): Promise<AuthResponse> => {
   const { data } = await api.post<AuthResponse>("/2fa/authenticate", { code });

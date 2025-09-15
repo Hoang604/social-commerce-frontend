@@ -20,7 +20,7 @@ const applyTheme = (theme: Theme) => {
 };
 
 export const useThemeStore = create<ThemeState>((set) => ({
-  theme: "system", // Giá trị mặc định
+  theme: "system", // Default value
   setTheme: (theme) => {
     set({ theme });
     localStorage.setItem("theme", theme);
@@ -28,7 +28,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
   },
 }));
 
-// Hàm này sẽ được gọi một lần khi ứng dụng tải
+// This function will be called once when the application loads
 export const initializeTheme = () => {
   const storedTheme = localStorage.getItem("theme") as Theme | null;
   const initialTheme = storedTheme || "system";

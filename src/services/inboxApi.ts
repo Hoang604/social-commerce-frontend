@@ -69,7 +69,7 @@ interface AgentTypingPayload {
 }
 
 export const sendAgentTypingStatus = async (payload: AgentTypingPayload) => {
-  // API này trả về 204 No Content, nên không cần xử lý response.data
+  // This API returns 204 No Content, so no need to process response.data
   await api.post(`/inbox/conversations/${payload.conversationId}/typing`, {
     isTyping: payload.isTyping,
   });
@@ -92,9 +92,9 @@ const getMessages = async (conversationId: number): Promise<Message[]> => {
 };
 
 const getVisitorById = async (visitorId: number): Promise<Visitor> => {
-  // PHẢN HỒI KIẾN TRÚC: Backend cần cung cấp endpoint này.
-  // Ví dụ: GET /inbox/visitors/:visitorId
-  // Hiện tại, chúng ta sẽ giả định nó tồn tại để hoàn thiện frontend.
+  // ARCHITECTURAL FEEDBACK: The backend needs to provide this endpoint.
+  // Example: GET /inbox/visitors/:visitorId
+  // For now, we will assume it exists to complete the frontend.
   const response = await api.get(`/inbox/visitors/${visitorId}`);
   return response.data;
 };
@@ -117,7 +117,7 @@ export const useGetConversations = (projectId?: number) => {
   return useQuery({
     queryKey: ["conversations", projectId],
     queryFn: () => {
-      if (!projectId) return { data: [], total: 0, page: 1, limit: 10 }; // Trả về cấu trúc mặc định
+      if (!projectId) return { data: [], total: 0, page: 1, limit: 10 }; // Return default structure
       return getConversationsByProjectId(projectId);
     },
     enabled: !!projectId,
@@ -199,7 +199,7 @@ export const useUpdateConversationStatus = () => {
   return useMutation({
     mutationFn: updateConversationStatus,
     onSuccess: () => {
-      // Làm mới lại danh sách conversations để cập nhật giao diện
+      // Refresh the conversation list to update the UI
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });

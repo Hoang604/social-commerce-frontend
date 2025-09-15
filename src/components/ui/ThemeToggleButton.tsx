@@ -64,7 +64,7 @@ export const ThemeToggleButton = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        onCloseAutoFocus={(event) => event.preventDefault()} // <-- THÊM prop onCloseAutoFocus
+        onCloseAutoFocus={(event) => event.preventDefault()} // ADD onCloseAutoFocus prop
       >
         <DropdownMenuItem onClick={() => setTheme("light")}>
           Sáng

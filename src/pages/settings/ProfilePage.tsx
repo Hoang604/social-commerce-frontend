@@ -53,7 +53,7 @@ export function ProfilePage() {
         Xem và quản lý thông tin cá nhân của bạn.
       </p>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-md">
-        {/* --- TRƯỜNG CHỈ ĐỌC --- */}
+        {/* --- READ-ONLY FIELD --- */}
         <div>
           <label
             htmlFor="email"
@@ -64,7 +64,7 @@ export function ProfilePage() {
           <Input id="email" value={user?.email || ""} disabled />
         </div>
 
-        {/* --- CÁC TRƯỜNG CÓ THỂ CHỈNH SỬA --- */}
+        {/* --- EDITABLE FIELDS --- */}
         <div>
           <label
             htmlFor="fullName"
@@ -118,7 +118,7 @@ export function ProfilePage() {
           {updateProfile.isPending ? "Đang lưu..." : "Lưu thay đổi"}
         </Button>
 
-        {/* --- THÔNG TIN BỔ SUNG (CHỈ ĐỌC) --- */}
+        {/* --- ADDITIONAL INFORMATION (READ-ONLY) --- */}
         <div className="pt-4 text-sm text-muted-foreground space-y-2">
           <p>
             Trạng thái tài khoản:{" "}

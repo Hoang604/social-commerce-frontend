@@ -27,7 +27,7 @@ const RegisterPage = () => {
         description: "Tạo tài khoản thành công!",
       });
       loginAction(data.user, data.accessToken);
-      navigate("/dashboard"); // Chuyển thẳng đến dashboard
+      navigate("/dashboard"); // Redirect directly to dashboard
     },
     onError: (error: any) => {
       console.error("Registration error:", error);
@@ -54,8 +54,8 @@ const RegisterPage = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState(""); // [2] State cho việc xác nhận mật khẩu
-  const [showPassword, setShowPassword] = useState(false); // [3] State để ẩn/hiện mật khẩu
+  const [confirmPassword, setConfirmPassword] = useState(""); // [2] State for password confirmation
+  const [showPassword, setShowPassword] = useState(false); // [3] State to hide/show password
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +79,7 @@ const RegisterPage = () => {
       return;
     }
 
-    // [4] Validation mới: Kiểm tra mật khẩu có khớp không
+    // [4] New validation: Check if passwords match
     if (password !== confirmPassword) {
       toast({
         title: "Lỗi",
@@ -112,18 +112,18 @@ const RegisterPage = () => {
           disabled={isPending}
         />
 
-        {/* [5] Bọc Input mật khẩu trong một div để đặt icon */}
+        {/* [5] Wrap password Input in a div to place icon */}
         <div className="relative">
           <Input
-            type={showPassword ? "text" : "password"} // [6] Thay đổi type động
+            type={showPassword ? "text" : "password"} // [6] Dynamic type change
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Mật khẩu (tối thiểu 8 ký tự)"
             required
             disabled={isPending}
-            className="pr-10" // Thêm padding để icon không đè lên chữ
+            className="pr-10" // Add padding so the icon doesn't overlap the text
           />
-          {/* [7] Nút ẩn/hiện mật khẩu */}
+          {/* [7] Button to hide/show password */}
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
@@ -133,7 +133,7 @@ const RegisterPage = () => {
           </button>
         </div>
 
-        {/* [8] Input mới cho việc xác nhận mật khẩu */}
+        {/* [8] New input for password confirmation */}
         <div className="relative">
           <Input
             type={showPassword ? "text" : "password"}

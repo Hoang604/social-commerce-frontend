@@ -19,14 +19,14 @@ export const ProjectSelector = ({
     navigate(`/inbox/projects/${projectId}`);
   };
 
-  // SỬA LỖI: Chuyển đổi mảng 'projects' sang định dạng mà component 'Select' yêu cầu
+  // FIX: Convert 'projects' array to the format required by the 'Select' component
   const selectOptions = projects.map((project) => ({
     value: project.id.toString(),
     label: project.name,
   }));
 
   return (
-    // SỬA LỖI: Sử dụng component 'Select' với các props chính xác
+    // FIX: Use 'Select' component with correct props
     <Select
       value={activeProjectId || ""}
       onChange={handleProjectChange}

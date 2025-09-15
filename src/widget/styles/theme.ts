@@ -5,6 +5,6 @@ export const theme = {
   },
   bubble: {
     agent: "#f3f4f6", // gray-100
-    visitor: "#dbeafe", // blue-200, sẽ được ghi đè bởi primaryColor
+    visitor: "#dbeafe", // blue-200, will be overridden by primaryColor
   },
 };

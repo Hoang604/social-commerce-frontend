@@ -21,7 +21,7 @@ export const ChatWindow = (props: ChatWindowProps) => {
   }
 
   return (
-    <div className="fixed bottom-20 right-5 w-80 h-96 bg-white rounded-lg shadow-xl flex flex-col fade-in-up">
+    <div className="fixed bottom-20 right-5 w-80 h-96 bg-white rounded-lg shadow-xl flex flex-col fade-in-up z-[9999]">
       <Header
         onClose={props.onClose}
         primaryColor={props.config.primaryColor}

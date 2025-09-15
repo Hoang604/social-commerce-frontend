@@ -31,7 +31,7 @@ export const Launcher = ({
     <button
       onClick={onClick}
       style={{ backgroundColor: primaryColor }}
-      className="fixed bottom-5 right-5 w-14 h-14 rounded-full text-white flex items-center justify-center shadow-lg transition-transform hover:scale-110"
+      className="fixed bottom-5 right-5 w-14 h-14 rounded-full text-white flex items-center justify-center shadow-lg transition-transform hover:scale-110 z-[9999]"
     >
       <ChatIcon />
       {unreadCount > 0 && (

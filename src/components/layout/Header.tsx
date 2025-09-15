@@ -1,6 +1,6 @@
 // src/components/layout/Header.tsx
 
-// PHẦN GIỮ NGUYÊN (IMPORTS)
+// RETAINED SECTION (IMPORTS)
 import { UserNav } from "./UserNav";
 import { ThemeToggleButton } from "../ui/ThemeToggleButton";
 
